@@ -15,50 +15,56 @@
         .tab { padding: 4px 10px; background: #e5e5ea; border-radius: 8px; font-size: 11px; white-space: nowrap; border: none; }
         .tab.active { background: var(--hk-blue); color: white; font-weight: bold; }
 
-        .display-card { background: var(--hk-blue); color: white; padding: 12px 15px; border-radius: 18px; margin-bottom: 8px; transition: background 0.3s; }
+        .display-card { background: var(--hk-blue); color: white; padding: 12px 15px; border-radius: 18px; margin-bottom: 8px; transition: background 0.3s; position: relative; }
         .display-card.is-predicting { background: var(--predict); }
         .display-card.is-past { background: #636366; }
         
         .amount { font-size: 32px; font-weight: bold; margin: 0; font-variant-numeric: tabular-nums; }
         .breakdown { font-size: 11px; opacity: 0.85; margin-top: 4px; }
         
-        /* 頂部預測框優化 */
-        .predict-box { text-align: right; width: 120px; }
+        /* 預測日期框：強制不超出 */
+        .predict-box { text-align: right; width: 110px; }
         .predict-box label { color: rgba(255,255,255,0.7); font-size: 9px; display: block; margin-bottom: 2px; }
-        .predict-box input { background: rgba(255,255,255,0.2); border: none; color: white; font-size: 10px; padding: 0 5px; border-radius: 6px; width: 100% !important; height: 22px; text-align: center; outline: none; }
+        .predict-box input { background: rgba(255,255,255,0.2); border: none; color: white; font-size: 10px; padding: 0; border-radius: 6px; width: 100% !important; height: 22px; text-align: center; outline: none; -webkit-appearance: none; }
 
-        .input-card { background: var(--card-bg); padding: 12px; border-radius: 12px; margin-bottom: 6px; border-left: 3px solid transparent; }
+        .input-card { background: var(--card-bg); padding: 12px; border-radius: 12px; margin-bottom: 6px; border-left: 3.5px solid transparent; overflow: hidden; }
         #rateInputCard { border-left-color: var(--hk-orange); }
         #moneyInputCard { border-left-color: var(--hk-blue); }
 
         .scope-selector { display: flex; background: #f2f2f7; border-radius: 8px; padding: 2px; margin-bottom: 10px; }
-        .scope-btn { flex: 1; border: none; background: none; font-size: 10px; padding: 6px 0; border-radius: 6px; color: #8e8e93; cursor: pointer; }
+        .scope-btn { flex: 1; border: none; background: none; font-size: 10px; padding: 6px 0; border-radius: 6px; color: #8e8e93; }
         .scope-btn.active { background: white; color: var(--hk-orange); font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 
-        .input-row { display: flex; flex-direction: column; gap: 10px; }
-        /* 關鍵修正：fields-container 寬度分配 */
-        .fields-container { display: flex; gap: 8px; width: 100%; align-items: flex-end; overflow: hidden; }
-        .field-num { flex: 2; min-width: 0; }
-        .field-date { flex: 3; min-width: 0; }
+        .input-row { display: flex; flex-direction: column; gap: 8px; }
         
-        label { display: block; font-size: 9px; color: #8e8e93; margin-bottom: 3px; font-weight: bold; }
+        /* 使用 Grid 鎖定 1:1 比例，且不會超出邊界 */
+        .fields-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; /* 1比1 比例 */
+            gap: 8px; 
+            width: 100%; 
+        }
         
-        /* 統一輸入框樣式，防止超出邊界 */
+        .field-unit { min-width: 0; width: 100%; }
+        label { display: block; font-size: 9px; color: #8e8e93; margin-bottom: 3px; font-weight: bold; white-space: nowrap; }
+        
+        /* 徹底重設輸入框，防止 iOS 撐開 */
         input { 
             width: 100%; 
-            max-width: 100%;
+            height: 40px; 
             border: 1px solid #d1d1d6; 
             border-radius: 8px; 
-            font-size: 14px; 
+            font-size: 15px; 
             background: #f9f9f9; 
-            height: 38px; 
             text-align: center; 
             margin: 0;
-            padding: 0 4px;
+            padding: 0; /* 移除內距防止撐大 */
+            display: block;
+            -webkit-appearance: none; /* 移除 iOS 預設樣式 */
         }
-        input::placeholder { color: #8e8e93; }
+        input::placeholder { color: #c7c7cc; }
 
-        .btn { width: 100%; border: none; border-radius: 8px; font-weight: bold; color: white; font-size: 14px; height: 40px; }
+        .btn { width: 100%; border: none; border-radius: 8px; font-weight: bold; color: white; font-size: 14px; height: 42px; display: flex; align-items: center; justify-content: center; }
         .btn-blue { background: var(--hk-blue); }
         .btn-red { background: var(--withdraw); }
         .btn-orange { background: var(--hk-orange); }
@@ -106,18 +112,18 @@
                 <button class="scope-btn" id="btnOnlyCurrent" onclick="setScope('current')">僅此帳戶</button>
             </div>
             <div id="rateNormalUI" class="input-row">
-                <div class="fields-container">
-                    <div class="field-num"><label>📈 年利率 %</label><input type="number" id="rateVal" step="0.01" inputmode="decimal" placeholder="最新: 0.00"></div>
-                    <div class="field-date"><label>📅 生效日期</label><input type="date" id="rateDate"></div>
+                <div class="fields-grid">
+                    <div class="field-unit"><label>📈 年利率 %</label><input type="number" id="rateVal" step="0.01" inputmode="decimal" placeholder="最新: 0.00"></div>
+                    <div class="field-unit"><label>📅 生效日期</label><input type="date" id="rateDate"></div>
                 </div>
                 <button class="btn btn-orange" onclick="handleRateUpdate()">更新利率</button>
             </div>
             <div id="rateEditUI" class="input-row hidden">
-                <div class="fields-container">
-                    <div class="field-num"><label>📈 修改 %</label><input type="number" id="editRateVal"></div>
-                    <div class="field-date"><label>📅 修改日期</label><input type="date" id="editRateDate"></div>
+                <div class="fields-grid">
+                    <div class="field-unit"><label>📈 修改 %</label><input type="number" id="editRateVal"></div>
+                    <div class="field-unit"><label>📅 修改日期</label><input type="date" id="editRateDate"></div>
                 </div>
-                <div style="display:flex; gap:8px;">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
                     <button class="btn btn-success" onclick="confirmEdit('rate')">儲存</button>
                     <button class="btn btn-gray" onclick="cancelEdit()">取消</button>
                 </div>
@@ -126,11 +132,11 @@
 
         <div class="input-card" id="moneyInputCard">
             <div id="moneyNormalUI" class="input-row">
-                <div class="fields-container">
-                    <div class="field-num"><label>💰 金額</label><input type="number" id="transAmt" placeholder="0.00" inputmode="decimal"></div>
-                    <div class="field-date"><label>📅 交易日期</label><input type="date" id="transDate"></div>
+                <div class="fields-grid">
+                    <div class="field-unit"><label>💰 金額</label><input type="number" id="transAmt" placeholder="0.00" inputmode="decimal"></div>
+                    <div class="field-unit"><label>📅 交易日期</label><input type="date" id="transDate"></div>
                 </div>
-                <div style="display:flex; gap:8px;">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
                     <button class="btn btn-blue" onclick="addRecord('dep')">📥 存入</button>
                     <button class="btn btn-red" onclick="addRecord('with')">📤 提取</button>
                 </div>
@@ -249,9 +255,8 @@
         const sorted = [...history].sort((a,b) => new Date(a.date) - new Date(b.date));
         
         const rates = sorted.filter(x => x.type === 'rate');
-        document.getElementById('rateVal').placeholder = rates.length ? `目前: ${rates[rates.length-1].value}%` : "最新: 0.00";
+        document.getElementById('rateVal').placeholder = rates.length ? `${rates[rates.length-1].value}%` : "0.00%";
 
-        // 更新 Label 邏輯
         const selectedDateStr = document.getElementById('targetDate').value;
         const selectedDate = new Date(selectedDateStr);
         selectedDate.setHours(0,0,0,0);
@@ -285,7 +290,7 @@
             sorted.filter(x => x.date === dStr).forEach(item => {
                 if (item.type === 'rate') { 
                     r = item.value / 100; 
-                    html = `<div class="log-item"><div class="log-info"><span class="log-date">${item.date}</span><br><span class="log-type-label log-rate-highlight">📈 利率調整: ${item.value}%</span></div><span class="log-amt"></span><div class="action-group"><div onclick="startEdit(${item.id},'rate',${item.value},'${item.date}')">${editSvg}</div><div onclick="delRecord(${item.id})">${delSvg}</div></div></div>` + html;
+                    html = `<div class="log-item"><div class="log-info"><span class="log-date">${item.date}</span><br><span class="log-type-label log-rate-highlight">📈 利率: ${item.value}%</span></div><span class="log-amt"></span><div class="action-group"><div onclick="startEdit(${item.id},'rate',${item.value},'${item.date}')">${editSvg}</div><div onclick="delRecord(${item.id})">${delSvg}</div></div></div>` + html;
                 } else {
                     const sign = item.type==='dep'?'+':'-';
                     p += (item.type==='dep'?item.value:-item.value);
