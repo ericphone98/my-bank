@@ -8,36 +8,29 @@
         :root { --hk-blue: #007aff; --hk-orange: #ff9500; --bg: #f2f2f7; --card-bg: #ffffff; --predict: #5856d6; --withdraw: #ff453a; --predict-bg: #f5f3ff; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 12px; padding-bottom: 60px; }
         .container { max-width: 420px; margin: auto; }
-        
         .account-tabs { display: flex; gap: 8px; overflow-x: auto; padding: 5px 0 15px 0; scrollbar-width: none; }
         .account-tabs::-webkit-scrollbar { display: none; }
         .tab { padding: 10px 18px; background: #e5e5ea; border-radius: 12px; font-size: 14px; white-space: nowrap; cursor: pointer; color: #3a3a3c; border: none; transition: 0.2s; }
         .tab.active { background: var(--hk-blue); color: white; font-weight: bold; box-shadow: 0 4px 10px rgba(0,122,255,0.3); }
         .add-tab { background: #fff; color: var(--hk-blue); border: 1px dashed var(--hk-blue); }
-
-        /* 動態顏色卡片 */
         .display-card { background: var(--hk-blue); color: white; padding: 25px 20px; border-radius: 20px; text-align: center; margin-bottom: 15px; box-shadow: 0 8px 16px rgba(0,122,255,0.15); transition: 0.5s ease; }
         .display-card.is-predicting { background: var(--predict); box-shadow: 0 8px 16px rgba(88, 86, 214, 0.3); }
-        
         .amount { font-size: 34px; font-weight: bold; margin: 8px 0; display: block; }
         .breakdown { font-size: 13px; opacity: 0.9; background: rgba(0,0,0,0.15); padding: 6px 12px; border-radius: 20px; display: inline-block; margin-top: 5px; }
-        
         .input-card { background: var(--card-bg); padding: 18px; border-radius: 18px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
         .editing-mode { border: 2px solid var(--hk-orange) !important; background: #fffdf5; }
         label { display: block; font-size: 11px; color: #8e8e93; margin-bottom: 4px; font-weight: bold; }
         input { width: 100%; padding: 12px; border: 1px solid #d1d1d6; border-radius: 10px; font-size: 16px; box-sizing: border-box; background: #f9f9f9; }
-        
         .btn-row { display: flex; gap: 10px; }
         .btn { flex: 1; padding: 14px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; color: white; font-size: 15px; }
         .btn-blue { background: var(--hk-blue); }
         .btn-red { background: var(--withdraw); }
         .btn-orange { background: var(--hk-orange); }
         .btn-gray { background: #8e8e93; }
-        
         .log-item { display: flex; justify-content: space-between; padding: 14px; border-bottom: 1px solid #f2f2f7; background: white; align-items: center; }
         .log-item.predict-row { background: var(--predict-bg); }
-        .log-date { font-size: 11px; color: #8e8e93; }
         .log-info { display: flex; flex-direction: column; flex-grow: 1; }
+        .log-date { font-size: 11px; color: #8e8e93; }
         .log-amt { font-weight: 600; font-size: 15px; margin-right: 10px; }
         .amt-pos { color: #34c759; }
         .amt-neg { color: var(--withdraw); }
@@ -49,17 +42,17 @@
 </head>
 <body>
 <div class="container">
-    <div id="syncStatus">● 準備就緒</div>
+    <div id="syncStatus">● 載入中...</div>
     <div class="account-tabs" id="accountTabs"></div>
 
     <div class="display-card" id="mainCard">
-        <small id="accountTitle">載入中...</small> <span id="modeTag"></span>
+        <small id="accountTitle">帳戶</small> <span id="modeTag"></span>
         <span class="amount" id="totalDisplay">HK$ 0.00</span>
         <div class="breakdown" id="breakdownDisplay">本金: 0.00 | 利息: 0.00</div>
     </div>
 
     <div class="input-card" style="border: 2px solid var(--predict);">
-        <label>🔭 預測截止日期 (利息計至該日凌晨)</label>
+        <label>🔭 預測截止日期 (計算利息至該日凌晨)</label>
         <input type="date" id="targetDate" onchange="runCalculation()">
     </div>
 
@@ -109,8 +102,11 @@
     let db = { current: "預設帳戶", accounts: { "預設帳戶": [] } };
     let editingId = null;
 
-    const todayDate = new Date(); todayDate.setHours(0,0,0,0);
-    const todayStr = todayDate.toISOString().split('T')[0];
+    // 校準「今天」的時間戳
+    const now = new Date();
+    const todayStr = now.toLocaleDateString('sv-SE'); // YYYY-MM-DD
+    const todayDate = new Date(todayStr);
+
     ['transDate', 'rateDate', 'targetDate'].forEach(id => document.getElementById(id).value = todayStr);
 
     async function pull() {
@@ -207,7 +203,6 @@
         const targetInput = document.getElementById('targetDate').value;
         const interestEndDate = new Date(targetInput); interestEndDate.setHours(0,0,0,0);
         
-        // 切換主卡片顏色
         const isPredictingMode = interestEndDate > todayDate;
         const mainCard = document.getElementById('mainCard');
         if (isPredictingMode) {
@@ -222,37 +217,37 @@
         if (sorted.length === 0) { updateUI(0,0); document.getElementById('logList').innerHTML = ""; return; }
 
         let iter = new Date(sorted[0].date); iter.setHours(0,0,0,0);
-        const renderEnd = new Date(targetInput); renderEnd.setHours(23,59,59);
+        const renderLimit = new Date(targetInput); renderLimit.setHours(23,59,59);
 
-        while (iter <= renderEnd) {
+        while (iter <= renderLimit) {
+            const currentIterStr = iter.toLocaleDateString('sv-SE');
             const isFuture = iter > todayDate;
-            
-            sorted.filter(item => {
-                const d = new Date(item.date); d.setHours(0,0,0,0);
-                return d.getTime() === iter.getTime();
-            }).forEach(item => {
+
+            // 1. 處理當天交易 (存取款優先於結算顯示)
+            sorted.filter(item => item.date === currentIterStr).forEach(item => {
                 let row = "", v = item.value.toFixed(2);
                 if (item.type === 'rate') { 
                     r = item.value / 100;
-                    row = `<div class="log-info"><span class="log-date">${item.date}${isFuture?' <span class="predict-tag">🔭 預估</span>':''}</span><span>📈 利率: ${item.value}%</span></div>`;
+                    row = `<div class="log-info"><span class="log-date">${item.date}${isFuture?' <span class="predict-tag">預估</span>':''}</span><span>📈 利率: ${item.value}%</span></div>`;
                 } else {
                     p += (item.type === 'dep' ? item.value : -item.value);
-                    row = `<div class="log-info"><span class="log-date">${item.date}${isFuture?' <span class="predict-tag">🔭 預估</span>':''}</span><span>${item.type==='dep'?'📥 存入':'📤 提款'}</span></div>
+                    row = `<div class="log-info"><span class="log-date">${item.date}${isFuture?' <span class="predict-tag">預估</span>':''}</span><span>${item.type==='dep'?'📥 存入':'📤 提款'}</span></div>
                            <span class="log-amt ${item.type==='dep'?'amt-pos':'amt-neg'}">${item.type==='dep'?'+':'-'}${v}</span>`;
                 }
                 html = `<div class="log-item ${isFuture?'predict-row':''}">${row}<div class="action-btns"><button onclick="startEdit(${item.id})">✏️</button><button onclick="delRecord(${item.id})">🗑️</button></div></div>` + html;
             });
 
+            // 2. 每月1號利息結算
             if (iter.getDate() === 1 && acc > 0) {
                 p += acc;
-                const dStr = `${iter.getFullYear()}-${String(iter.getMonth()+1).padStart(2,'0')}-01`;
                 html = `<div class="log-item ${isFuture?'predict-row':''}" style="background:${isFuture?'#f5f3ff':'#f0faff'}">
-                    <div class="log-info"><span class="log-date">${dStr}${isFuture?' <span class="predict-tag">🔭 預估</span>':''}</span><span style="font-weight:bold;color:${isFuture?'var(--predict)':'var(--hk-blue)'}">🔄 利息滾入本金</span></div>
+                    <div class="log-info"><span class="log-date">${currentIterStr}${isFuture?' <span class="predict-tag">預估</span>':''}</span><span style="font-weight:bold;color:${isFuture?'var(--predict)':'var(--hk-blue)'}">🔄 利息自動轉本金</span></div>
                     <span class="log-amt amt-int">+${acc.toFixed(2)}</span><div style="width:68px"></div>
                 </div>` + html;
                 acc = 0;
             }
 
+            // 3. 過夜息計算 (嚴格截止)
             if (iter.getTime() < interestEndDate.getTime() && p > 0 && r > 0) {
                 acc += (p * r) / 365;
             }
@@ -264,7 +259,7 @@
 
     function updateUI(p, acc) {
         document.getElementById('totalDisplay').innerText = `HK$ ${(p+acc).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}`;
-        document.getElementById('breakdownDisplay').innerText = `本金: ${p.toFixed(2)} | 利息: ${acc.toFixed(2)}`;
+        document.getElementById('breakdownDisplay').innerText = `本金: ${p.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})} | 未結利息: ${acc.toFixed(2)}`;
     }
 
     function deleteAcc() {
