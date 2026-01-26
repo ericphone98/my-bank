@@ -27,25 +27,27 @@
 
         .input-card { 
             background: var(--card-bg); 
-            padding: 10px 10px 10px 6px; 
+            padding: 10px 10px 10px 10px; 
             border-radius: 12px; 
             margin-bottom: 6px; 
-            border: 1px solid transparent; 
+            border-left: 3px solid transparent;
         }
-        #rateInputCard { border-left: 2.5px solid var(--hk-orange); }
-        #moneyInputCard { border-left: 2.5px solid var(--hk-blue); }
+        #rateInputCard { border-left-color: var(--hk-orange); }
+        #moneyInputCard { border-left-color: var(--hk-blue); }
 
-        .input-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: flex-end; }
+        .input-row { display: flex; gap: 10px; margin-bottom: 8px; align-items: flex-end; }
         
-        /* 數值輸入框縮小，日期選擇框不縮小 */
-        .field-num { flex: 0 0 85px; } 
-        .field-date { flex: 1.3; }
+        /* 修改點：數值與日期輸入框大小一致 */
+        .field-num, .field-date { flex: 1; min-width: 0; }
         
         label { display: block; font-size: 9px; color: #8e8e93; margin-bottom: 3px; font-weight: bold; }
         input { width: 100%; padding: 0 8px; border: 1px solid #d1d1d6; border-radius: 8px; font-size: 14px; background: #f9f9f9; height: 36px; }
 
-        .btn-row { display: flex; gap: 6px; flex: 1.2; } 
-        .btn { flex: 1; border: none; border-radius: 8px; font-weight: bold; color: white; font-size: 13px; height: 36px; cursor: pointer; }
+        /* 按鈕區域 */
+        .btn-row { display: flex; gap: 6px; flex: 0 0 100px; } /* 存/提按鈕區 */
+        .btn-row-single { display: flex; flex: 0 0 50px; } /* 單個按鈕區（更新） */
+        
+        .btn { width: 100%; border: none; border-radius: 8px; font-weight: bold; color: white; font-size: 12px; height: 36px; cursor: pointer; padding: 0 4px; }
         .btn-blue { background: var(--hk-blue); }
         .btn-red { background: var(--withdraw); }
         .btn-orange { background: var(--hk-orange); }
@@ -113,7 +115,7 @@
                 <div class="input-row">
                     <div class="field-num"><label>📈 年利率 %</label><input type="number" id="rateVal" placeholder="0.00" inputmode="decimal"></div>
                     <div class="field-date"><label>📅 生效日期</label><input type="date" id="rateDate"></div>
-                    <div class="btn-row"><button class="btn btn-orange" onclick="addRecord('rate')">更新</button></div>
+                    <div class="btn-row-single"><button class="btn btn-orange" onclick="addRecord('rate')">更新</button></div>
                 </div>
             </div>
             <div id="rateEditUI" class="hidden">
