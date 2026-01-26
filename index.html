@@ -24,14 +24,21 @@
         .predict-box label { color: rgba(255,255,255,0.7); font-size: 9px; display: block; }
         .predict-box input { background: rgba(255,255,255,0.2); border: none; color: white; font-size: 10px; padding: 0 5px; border-radius: 6px; width: 100px !important; height: 22px; text-align: center; outline: none; }
 
-        .input-card { background: var(--card-bg); padding: 12px; border-radius: 12px; margin-bottom: 6px; border-left: 3px solid transparent; }
-        #rateInputCard { border-left-color: var(--hk-orange); }
-        #moneyInputCard { border-left-color: var(--hk-blue); }
+        /* 修正：同時添加左右兩側的邊條 */
+        .input-card { 
+            background: var(--card-bg); 
+            padding: 12px; 
+            border-radius: 12px; 
+            margin-bottom: 6px; 
+            border-left: 3px solid transparent;
+            border-right: 3px solid transparent;
+        }
+        #rateInputCard { border-left-color: var(--hk-orange); border-right-color: var(--hk-orange); }
+        #moneyInputCard { border-left-color: var(--hk-blue); border-right-color: var(--hk-blue); }
 
         .input-row { display: flex; flex-direction: column; gap: 10px; }
         .fields-container { display: flex; gap: 8px; width: 100%; align-items: flex-end; }
         
-        /* 50% : 50% 比例 */
         .field-num { flex: 1; min-width: 0; }
         .field-date { flex: 1; min-width: 0; }
         
@@ -66,8 +73,6 @@
         .log-info { flex: 1; }
         .log-date { font-size: 10px; color: #8e8e93; }
         .log-type-label { font-size: 12px; font-weight: 500; }
-        
-        /* 利率紀錄只改顏色，不加粗 */
         .log-rate-highlight { color: var(--hk-orange); }
         
         .log-amt { font-variant-numeric: tabular-nums; font-weight: 600; font-size: 13px; text-align: right; min-width: 90px; }
@@ -88,7 +93,6 @@
     </style>
 </head>
 <body>
-
     <div class="top-panel">
         <div id="syncStatus" style="font-size:9px; text-align:center; color:#8e8e93; margin-bottom:2px;">同步中...</div>
         <div class="account-tabs" id="accountTabs"></div>
@@ -157,6 +161,7 @@
     </div>
 
 <script>
+    // JS 邏輯完全相同，請保留您目前的腳本內容即可
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwjWG0VNOh5X-XigkCtX24GiaDxIvm9EgNVY8iQwg36mAr2TUVtArqq9pFSIReP3MQv/exec';
     let db = { current: "預設帳戶", accounts: { "預設帳戶": [] } };
     let pendingEditId = null;
@@ -269,7 +274,7 @@
                 if (item.type === 'rate') { 
                     r = item.value / 100; 
                     name = "📈 利率調整: " + item.value + "%";
-                    labelClass += " log-rate-highlight"; // 橙色
+                    labelClass += " log-rate-highlight";
                 } else {
                     p += (item.type === 'dep' ? item.value : -item.value);
                     name = item.type === 'dep' ? "📥 存入" : "📤 提款";
