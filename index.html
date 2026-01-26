@@ -41,36 +41,66 @@
         .btn-success { background: var(--success); }
         .btn-gray { background: #8e8e93; }
 
+        /* 核心修復：垂直置中佈局 */
         .log-section { flex: 1; background: white; border-radius: 20px 20px 0 0; display: flex; flex-direction: column; overflow: hidden; border-top: 1px solid #e5e5ea; position: relative; }
         #logList { overflow-y: auto; flex: 1; padding-bottom: 60px; }
         
-        .log-item { display: flex; justify-content: space-between; padding: 12px 15px; border-bottom: 1px solid #f2f2f7; align-items: center; }
-        .log-info { flex: 1; min-width: 0; }
-        .log-date { font-size: 10px; color: #8e8e93; }
-        .log-amt { font-family: -apple-system, sans-serif; font-weight: 700; font-size: 15px; text-align: right; min-width: 90px; }
-        .action-group { display: flex; align-items: center; gap: 10px; flex: 0 0 70px; justify-content: flex-end; margin-left: 10px; }
+        .log-item { 
+            display: flex; 
+            justify-content: space-between; 
+            padding: 14px 15px; 
+            border-bottom: 1px solid #f2f2f7; 
+            align-items: center; /* 關鍵：強制所有子元素在垂直中心對齊 */
+            min-height: 56px; /* 確保行高統一 */
+        }
+        
+        .log-info { 
+            flex: 1; 
+            min-width: 0; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; /* 確保左側文字垂直置中 */
+        }
+        
+        .log-date { font-size: 10px; color: #8e8e93; line-height: 1.2; }
+        .log-type-label { font-size: 12px; font-weight: 500; line-height: 1.4; margin-top: 2px; }
+        
+        .log-amt { 
+            font-family: -apple-system, sans-serif;
+            font-variant-numeric: tabular-nums; 
+            font-weight: 700; 
+            font-size: 16px; 
+            text-align: right; 
+            min-width: 100px;
+            margin-left: 10px;
+            display: flex;
+            align-items: center; /* 數字內部對齊 */
+            justify-content: flex-end;
+            line-height: 1; /* 消除預設行高偏移 */
+        }
 
-        /* SVG 圖示顏色 */
-        .icon-svg { width: 18px; height: 18px; fill: #8e8e93; }
-        .icon-edit:active { fill: var(--hk-blue); }
-        .icon-del:active { fill: var(--withdraw); }
+        .action-group { 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            flex: 0 0 70px; 
+            justify-content: flex-end; 
+            margin-left: 10px;
+        }
 
+        .icon-svg { width: 18px; height: 18px; fill: #b0b0b7; cursor: pointer; }
         .amt-pos { color: #34c759; }
         .amt-neg { color: var(--withdraw); }
         .amt-int { color: var(--predict); }
 
-        /* 縮小後的底部管理按鈕 */
         .bottom-bar { 
             position: absolute; bottom: 0; left: 0; right: 0; 
-            background: rgba(255,255,255,0.8); backdrop-filter: blur(5px); 
-            padding: 8px 15px calc(5px + env(safe-area-inset-bottom)); 
-            display: flex; justify-content: center; gap: 20px;
+            background: rgba(255,255,255,0.85); backdrop-filter: blur(10px); 
+            padding: 8px 15px calc(8px + env(safe-area-inset-bottom)); 
+            display: flex; justify-content: center; gap: 25px;
+            border-top: 0.5px solid #e5e5ea;
         }
-        .btn-small-mng { 
-            background: none; border: none; color: #8e8e93; font-size: 10px; 
-            padding: 5px 10px; border-radius: 15px; border: 1px solid #e5e5ea;
-            display: flex; align-items: center; gap: 4px;
-        }
+        .btn-small-mng { background: none; border: none; color: #8e8e93; font-size: 10px; padding: 4px 8px; border-radius: 12px; border: 1px solid #e5e5ea; }
         .btn-small-del { color: #ff3b30; border-color: #ffcccc; }
 
         .hidden { display: none !important; }
@@ -159,7 +189,7 @@
             const data = await r.json();
             if (data && data.accounts) db = data;
             renderTabs(); runCalculation();
-            document.getElementById('syncStatus').innerText = "● 雲端同步完成";
+            document.getElementById('syncStatus').innerText = "● 雲端同步中";
         } catch (e) { document.getElementById('syncStatus').innerText = "× 同步失敗"; }
     }
 
@@ -183,7 +213,7 @@
 
     function handleReset() { if (confirm(`確定清空 [${db.current}] 紀錄？`)) { db.accounts[db.current] = []; push(); } }
     function handleDelete() {
-        if (Object.keys(db.accounts).length <= 1) return alert("最後一個帳戶不能刪除。");
+        if (Object.keys(db.accounts).length <= 1) return alert("不能刪除最後一個帳戶");
         if (confirm(`確定刪除 [${db.current}] 帳戶？`)) { delete db.accounts[db.current]; db.current = Object.keys(db.accounts)[0]; push(); }
     }
 
@@ -251,8 +281,8 @@
         let iter = (sorted.length > 0) ? new Date(sorted[0].date) : new Date();
         iter.setHours(0,0,0,0);
 
-        const editSvg = `<svg class="icon-svg icon-edit" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>`;
-        const delSvg = `<svg class="icon-svg icon-del" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>`;
+        const editSvg = `<svg class="icon-svg" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>`;
+        const delSvg = `<svg class="icon-svg" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>`;
 
         while (iter <= inputDate) {
             const dStr = iter.toLocaleDateString('sv-SE');
@@ -266,7 +296,10 @@
                     amtClass = item.type === 'dep' ? "amt-pos" : "amt-neg";
                 }
                 html = `<div class="log-item">
-                    <div class="log-info"><span class="log-date">${item.date}</span><br><span style="font-size:12px; font-weight:500;">${name}</span></div>
+                    <div class="log-info">
+                        <span class="log-date">${item.date}</span>
+                        <span class="log-type-label">${name}</span>
+                    </div>
                     <span class="log-amt ${amtClass}">${sign}${item.type==='rate' ? '' : item.value.toLocaleString(undefined,{minimumFractionDigits:2})}</span>
                     <div class="action-group">
                         <div onclick="startEdit(${item.id}, '${item.type}', ${item.value}, '${item.date}')">${editSvg}</div>
@@ -277,7 +310,10 @@
             if (iter.getDate() === 1 && acc > 0) {
                 p += acc;
                 html = `<div class="log-item" style="background:#f0faff">
-                    <div class="log-info"><span class="log-date">${dStr}</span><br><span style="font-weight:bold;color:var(--hk-blue);font-size:12px">🔄 利息存入</span></div>
+                    <div class="log-info">
+                        <span class="log-date">${dStr}</span>
+                        <span class="log-type-label" style="font-weight:bold;color:var(--hk-blue);">🔄 利息存入</span>
+                    </div>
                     <span class="log-amt amt-int">+${acc.toLocaleString(undefined,{minimumFractionDigits:2})}</span>
                     <div class="action-group"></div>
                 </div>` + html;
