@@ -24,39 +24,22 @@
         .predict-box label { color: rgba(255,255,255,0.7); font-size: 9px; display: block; }
         .predict-box input { background: rgba(255,255,255,0.2); border: none; color: white; font-size: 10px; padding: 0 5px; border-radius: 6px; width: 100px !important; height: 22px; text-align: center; outline: none; }
 
-        /* 修正：同時添加左右兩側的邊條 */
         .input-card { 
-            background: var(--card-bg); 
-            padding: 12px; 
-            border-radius: 12px; 
-            margin-bottom: 6px; 
-            border-left: 3px solid transparent;
-            border-right: 3px solid transparent;
+            background: var(--card-bg); padding: 12px; border-radius: 12px; margin-bottom: 6px; 
+            border-left: 3px solid transparent; border-right: 3px solid transparent;
         }
         #rateInputCard { border-left-color: var(--hk-orange); border-right-color: var(--hk-orange); }
         #moneyInputCard { border-left-color: var(--hk-blue); border-right-color: var(--hk-blue); }
 
         .input-row { display: flex; flex-direction: column; gap: 10px; }
         .fields-container { display: flex; gap: 8px; width: 100%; align-items: flex-end; }
-        
-        .field-num { flex: 1; min-width: 0; }
-        .field-date { flex: 1; min-width: 0; }
-        
+        .field-num, .field-date { flex: 1; min-width: 0; }
         label { display: block; font-size: 9px; color: #8e8e93; margin-bottom: 3px; font-weight: bold; }
         
         input { 
-            width: 100%; 
-            padding: 0;
-            border: 1px solid #d1d1d6; 
-            border-radius: 8px; 
-            font-size: 14px; 
-            background: #f9f9f9; 
-            height: 36px;
-            line-height: 36px;
-            text-align: center;
-            -webkit-appearance: none;
-            appearance: none;
-            min-height: 0;
+            width: 100%; padding: 0; border: 1px solid #d1d1d6; border-radius: 8px; 
+            font-size: 14px; background: #f9f9f9; height: 36px; line-height: 36px;
+            text-align: center; -webkit-appearance: none; appearance: none; min-height: 0;
         }
 
         .btn-row, .btn-row-single { display: flex; gap: 8px; width: 100%; }
@@ -74,7 +57,6 @@
         .log-date { font-size: 10px; color: #8e8e93; }
         .log-type-label { font-size: 12px; font-weight: 500; }
         .log-rate-highlight { color: var(--hk-orange); }
-        
         .log-amt { font-variant-numeric: tabular-nums; font-weight: 600; font-size: 13px; text-align: right; min-width: 90px; }
         .action-group { display: flex; gap: 12px; margin-left: 8px; }
         .icon-svg { width: 16px; height: 16px; fill: #b0b0b7; }
@@ -85,14 +67,14 @@
             position: absolute; bottom: 0; left: 0; right: 0; 
             background: rgba(255,255,255,0.85); backdrop-filter: blur(10px); 
             padding: 8px 15px calc(8px + env(safe-area-inset-bottom)); 
-            display: flex; justify-content: center; gap: 20px;
-            border-top: 0.5px solid #e5e5ea;
+            display: flex; justify-content: center; gap: 20px; border-top: 0.5px solid #e5e5ea;
         }
         .btn-small-mng { background: none; border: 1px solid #e5e5ea; color: #8e8e93; font-size: 10px; padding: 4px 10px; border-radius: 10px; }
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
+
     <div class="top-panel">
         <div id="syncStatus" style="font-size:9px; text-align:center; color:#8e8e93; margin-bottom:2px;">同步中...</div>
         <div class="account-tabs" id="accountTabs"></div>
@@ -111,7 +93,7 @@
         <div class="input-card" id="rateInputCard">
             <div id="rateNormalUI" class="input-row">
                 <div class="fields-container">
-                    <div class="field-num"><label>📈 年利率 %</label><input type="number" id="rateVal" placeholder="0.00" inputmode="decimal"></div>
+                    <div class="field-num"><label>📈 年利率 %</label><input type="number" id="rateVal" step="0.01" inputmode="decimal"></div>
                     <div class="field-date"><label>📅 生效日期</label><input type="date" id="rateDate"></div>
                 </div>
                 <div class="btn-row-single"><button class="btn btn-orange" onclick="addRecord('rate')">更新利率</button></div>
@@ -161,7 +143,6 @@
     </div>
 
 <script>
-    // JS 邏輯完全相同，請保留您目前的腳本內容即可
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwjWG0VNOh5X-XigkCtX24GiaDxIvm9EgNVY8iQwg36mAr2TUVtArqq9pFSIReP3MQv/exec';
     let db = { current: "預設帳戶", accounts: { "預設帳戶": [] } };
     let pendingEditId = null;
@@ -211,7 +192,7 @@
         if (!val) return;
         db.accounts[db.current].push({ id: Date.now(), type: (type==='rate'?'rate':(type==='dep'?'dep':'with')), date, value: parseFloat(val) });
         push();
-        document.getElementById(type === 'rate' ? 'rateVal' : 'transAmt').value = '';
+        if(type!=='rate') document.getElementById('transAmt').value = '';
     }
 
     function startEdit(id, type, val, date) {
@@ -253,6 +234,17 @@
     function runCalculation() {
         const history = db.accounts[db.current] || [];
         const sorted = [...history].sort((a,b) => new Date(a.date) - new Date(b.date));
+        
+        // --- 核心修正：抓取最新利率填入輸入框 ---
+        const rateRecords = sorted.filter(x => x.type === 'rate');
+        if (rateRecords.length > 0) {
+            const latestRate = rateRecords[rateRecords.length - 1].value;
+            document.getElementById('rateVal').value = latestRate;
+        } else {
+            document.getElementById('rateVal').placeholder = "0.00";
+        }
+        // ------------------------------------
+
         const inputDateStr = document.getElementById('targetDate').value;
         const inputDate = new Date(inputDateStr); inputDate.setHours(0,0,0,0);
         const today = new Date(); today.setHours(0,0,0,0);
