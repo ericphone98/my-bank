@@ -216,7 +216,7 @@
             if (iter.getDate() === 1 && acc > 0) {
                 p += acc;
                 logHtml = `<div class="log-item" style="background:#f0faff">
-                    <div><span class="log-date"+1>${iter.toISOString().split('T')[0]}</span><span style="font-size:12px; font-weight:bold; color:#007aff">🔄 利息結算</span></div>
+                    <div><span class="log-date">${iter.toISOString().split('T')[0]}</span><span style="font-size:12px; font-weight:bold; color:#007aff">🔄 利息結算</span></div>
                     <span class="log-amt amt-int">+${acc.toFixed(2)}</span><div style="width:40px"></div>
                 </div>` + logHtml;
                 acc = 0;
@@ -242,5 +242,6 @@
 </body>
 
 </html>
+
 
 
