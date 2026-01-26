@@ -27,7 +27,7 @@
 
         .input-card { 
             background: var(--card-bg); 
-            padding: 10px 10px 10px 10px; 
+            padding: 12px; 
             border-radius: 12px; 
             margin-bottom: 6px; 
             border-left: 3px solid transparent;
@@ -35,19 +35,20 @@
         #rateInputCard { border-left-color: var(--hk-orange); }
         #moneyInputCard { border-left-color: var(--hk-blue); }
 
-        .input-row { display: flex; gap: 10px; margin-bottom: 8px; align-items: flex-end; }
+        /* 核心修改：改為垂直排列 */
+        .input-row { display: flex; flex-direction: column; gap: 10px; }
+        .fields-container { display: flex; gap: 10px; width: 100%; }
         
-        /* 已編輯：將數值輸入框比例縮小 (從 1 改為 0.7) */
         .field-num { flex: 0.7; min-width: 0; }
         .field-date { flex: 1; min-width: 0; }
         
         label { display: block; font-size: 9px; color: #8e8e93; margin-bottom: 3px; font-weight: bold; }
         input { width: 100%; padding: 0 8px; border: 1px solid #d1d1d6; border-radius: 8px; font-size: 14px; background: #f9f9f9; height: 36px; }
 
-        .btn-row { display: flex; gap: 6px; flex: 0 0 100px; } 
-        .btn-row-single { display: flex; flex: 0 0 50px; } 
+        /* 按鈕移至下一行並填滿 */
+        .btn-row, .btn-row-single { display: flex; gap: 8px; width: 100%; }
         
-        .btn { width: 100%; border: none; border-radius: 8px; font-weight: bold; color: white; font-size: 12px; height: 36px; cursor: pointer; padding: 0 4px; }
+        .btn { flex: 1; border: none; border-radius: 8px; font-weight: bold; color: white; font-size: 14px; height: 38px; cursor: pointer; }
         .btn-blue { background: var(--hk-blue); }
         .btn-red { background: var(--withdraw); }
         .btn-orange { background: var(--hk-orange); }
@@ -64,16 +65,8 @@
         .log-rate-text { color: var(--hk-orange); font-weight: 600; }
 
         .log-amt { 
-            font-variant-numeric: tabular-nums; 
-            font-weight: 600; 
-            font-size: 13px; 
-            text-align: right; 
-            min-width: 90px;
-            margin-left: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            line-height: 1;
+            font-variant-numeric: tabular-nums; font-weight: 600; font-size: 13px; text-align: right; 
+            min-width: 90px; margin-left: 10px; display: flex; align-items: center; justify-content: flex-end;
         }
 
         .action-group { display: flex; align-items: center; gap: 12px; flex: 0 0 70px; justify-content: flex-end; margin-left: 8px; }
@@ -111,44 +104,44 @@
         </div>
 
         <div class="input-card" id="rateInputCard">
-            <div id="rateNormalUI">
-                <div class="input-row">
+            <div id="rateNormalUI" class="input-row">
+                <div class="fields-container">
                     <div class="field-num"><label>📈 年利率 %</label><input type="number" id="rateVal" placeholder="0.00" inputmode="decimal"></div>
                     <div class="field-date"><label>📅 生效日期</label><input type="date" id="rateDate"></div>
-                    <div class="btn-row-single"><button class="btn btn-orange" onclick="addRecord('rate')">更新</button></div>
                 </div>
+                <div class="btn-row-single"><button class="btn btn-orange" onclick="addRecord('rate')">更新利率</button></div>
             </div>
-            <div id="rateEditUI" class="hidden">
-                <div class="input-row">
+            <div id="rateEditUI" class="input-row hidden">
+                <div class="fields-container">
                     <div class="field-num"><label>📈 修改 %</label><input type="number" id="editRateVal"></div>
                     <div class="field-date"><label>📅 修改日期</label><input type="date" id="editRateDate"></div>
-                    <div class="btn-row">
-                        <button class="btn btn-success" onclick="confirmEdit('rate')">✅</button>
-                        <button class="btn btn-gray" onclick="cancelEdit()">❌</button>
-                    </div>
+                </div>
+                <div class="btn-row">
+                    <button class="btn btn-success" onclick="confirmEdit('rate')">✅ 儲存</button>
+                    <button class="btn btn-gray" onclick="cancelEdit()">❌ 取消</button>
                 </div>
             </div>
         </div>
 
         <div class="input-card" id="moneyInputCard">
-            <div id="moneyNormalUI">
-                <div class="input-row">
+            <div id="moneyNormalUI" class="input-row">
+                <div class="fields-container">
                     <div class="field-num"><label>💰 金額</label><input type="number" id="transAmt" placeholder="0.00" inputmode="decimal"></div>
                     <div class="field-date"><label>📅 交易日期</label><input type="date" id="transDate"></div>
-                    <div class="btn-row">
-                        <button class="btn btn-blue" onclick="addRecord('dep')">存入</button>
-                        <button class="btn btn-red" onclick="addRecord('with')">提取</button>
-                    </div>
+                </div>
+                <div class="btn-row">
+                    <button class="btn btn-blue" onclick="addRecord('dep')">📥 存入</button>
+                    <button class="btn btn-red" onclick="addRecord('with')">📤 提取</button>
                 </div>
             </div>
-            <div id="moneyEditUI" class="hidden">
-                <div class="input-row">
+            <div id="moneyEditUI" class="input-row hidden">
+                <div class="fields-container">
                     <div class="field-num"><label>💰 修改金額</label><input type="number" id="editTransAmt"></div>
                     <div class="field-date"><label>📅 修改日期</label><input type="date" id="editTransDate"></div>
-                    <div class="btn-row">
-                        <button class="btn btn-success" onclick="confirmEdit('money')">✅</button>
-                        <button class="btn btn-gray" onclick="cancelEdit()">❌</button>
-                    </div>
+                </div>
+                <div class="btn-row">
+                    <button class="btn btn-success" onclick="confirmEdit('money')">✅ 儲存</button>
+                    <button class="btn btn-gray" onclick="cancelEdit()">❌ 取消</button>
                 </div>
             </div>
         </div>
@@ -163,6 +156,7 @@
     </div>
 
 <script>
+    // JS 部分邏輯保持不變，僅確保 UI 切換正常
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwjWG0VNOh5X-XigkCtX24GiaDxIvm9EgNVY8iQwg36mAr2TUVtArqq9pFSIReP3MQv/exec';
     let db = { current: "預設帳戶", accounts: { "預設帳戶": [] } };
     let pendingEditId = null;
