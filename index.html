@@ -25,7 +25,8 @@
         .predict-box label { color: rgba(255,255,255,0.7); font-size: 9px; display: block; }
         .predict-box input { background: rgba(255,255,255,0.2); border: none; color: white; font-size: 10px; padding: 0 5px; border-radius: 6px; width: 105px; height: 24px; line-height: 24px; outline: none; }
 
-        .input-card { background: var(--card-bg); padding: 10px; border-radius: 14px; margin-bottom: 6px; }
+        .input-card { background: var(--card-bg); padding: 10px; border-radius: 14px; margin-bottom: 6px; border: 2px solid transparent; }
+        .input-card.editing { border-color: var(--hk-orange); background: #fffdf5; }
         .input-row { display: flex; gap: 10px; margin-bottom: 8px; align-items: flex-end; }
         .field-main { flex: 2; }
         .field-date { flex: 1.3; }
@@ -43,10 +44,10 @@
         .btn-red { background: var(--withdraw); }
         .btn-orange { background: var(--hk-orange); }
 
-        /* 紀錄清單區域 */
         .log-section { flex: 1; background: white; border-radius: 20px 20px 0 0; display: flex; flex-direction: column; overflow: hidden; border-top: 1px solid #e5e5ea; }
         #logList { overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; padding-bottom: 100px; }
         .log-item { display: flex; justify-content: space-between; padding: 12px 15px; border-bottom: 1px solid #f2f2f7; align-items: center; }
+        .log-item.being-edited { background: #fff9db; opacity: 0.8; }
         .log-info { flex: 1; }
         .log-date { font-size: 10px; color: #8e8e93; }
         .log-amt { font-family: 'SF Mono', monospace; font-weight: 600; font-size: 14px; margin-right: 12px; }
@@ -54,10 +55,8 @@
         .amt-neg { color: var(--withdraw); }
         .amt-int { color: var(--predict); }
         
-        /* 操作按鈕組 */
         .action-group { display: flex; align-items: center; gap: 8px; }
         .icon-btn { border: none; background: none; padding: 4px; font-size: 16px; cursor: pointer; opacity: 0.6; }
-        .icon-btn:active { opacity: 1; scale: 1.2; }
     </style>
 </head>
 <body>
@@ -78,18 +77,7 @@
             <div class="breakdown" id="breakdownDisplay">本金: 0.00 | 利息: 0.00</div>
         </div>
 
-        <div class="input-card" style="border-top: 2px solid var(--hk-blue);">
-            <div class="input-row">
-                <div class="field-main"><label>💰 存款/提款金額</label><input type="number" id="transAmt" placeholder="0.00" inputmode="decimal"></div>
-                <div class="field-date"><label>📅 交易日期</label><input type="date" id="transDate"></div>
-            </div>
-            <div class="btn-row">
-                <button class="btn btn-blue" onclick="addRecord('dep')">存入</button>
-                <button class="btn btn-red" onclick="addRecord('with')">提款</button>
-            </div>
-        </div>
-
-        <div class="input-card" style="border-left: 4px solid var(--hk-orange);">
+        <div class="input-card" id="rateInputCard" style="border-left: 4px solid var(--hk-orange);">
             <div class="toggle-row">
                 <button class="toggle-btn active" id="btnAll" onclick="setRateMode('all')">所有帳戶同步</button>
                 <button class="toggle-btn" id="btnInd" onclick="setRateMode('ind')">個別帳戶</button>
@@ -98,7 +86,18 @@
                 <div class="field-main"><label>📈 年利率 %</label><input type="number" id="rateVal" placeholder="0.00" inputmode="decimal"></div>
                 <div class="field-date"><label>📅 生效日期</label><input type="date" id="rateDate"></div>
             </div>
-            <button class="btn btn-orange" style="width:100%;" onclick="addRecord('rate')">更新利率</button>
+            <button class="btn btn-orange" id="btnRate" style="width:100%;" onclick="addRecord('rate')">更新利率</button>
+        </div>
+
+        <div class="input-card" id="moneyInputCard" style="border-top: 2px solid var(--hk-blue);">
+            <div class="input-row">
+                <div class="field-main"><label>💰 存款/提款金額</label><input type="number" id="transAmt" placeholder="0.00" inputmode="decimal"></div>
+                <div class="field-date"><label>📅 交易日期</label><input type="date" id="transDate"></div>
+            </div>
+            <div class="btn-row">
+                <button class="btn btn-blue" id="btnDep" onclick="addRecord('dep')">存入</button>
+                <button class="btn btn-red" id="btnWith" onclick="addRecord('with')">提款</button>
+            </div>
         </div>
     </div>
 
@@ -110,6 +109,7 @@
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwjWG0VNOh5X-XigkCtX24GiaDxIvm9EgNVY8iQwg36mAr2TUVtArqq9pFSIReP3MQv/exec';
     let db = { current: "預設帳戶", accounts: { "預設帳戶": [] } };
     let rateMode = 'all';
+    let pendingEditId = null;
 
     const todayStr = new Date().toLocaleDateString('sv-SE');
     ['transDate', 'rateDate', 'targetDate'].forEach(id => document.getElementById(id).value = todayStr);
@@ -152,6 +152,13 @@
         let val = (type === 'rate') ? document.getElementById('rateVal').value : document.getElementById('transAmt').value;
         let date = (type === 'rate') ? document.getElementById('rateDate').value : document.getElementById('transDate').value;
         if (!val) return;
+
+        if (pendingEditId) {
+            db.accounts[db.current] = db.accounts[db.current].filter(x => x.id !== pendingEditId);
+            pendingEditId = null;
+            document.querySelectorAll('.input-card').forEach(c => c.classList.remove('editing'));
+        }
+
         const record = { id: Date.now(), type, date, value: parseFloat(val) };
         if (type === 'rate' && rateMode === 'all') {
             Object.keys(db.accounts).forEach((acc, i) => db.accounts[acc].push({...record, id: Date.now() + i}));
@@ -162,16 +169,20 @@
     }
 
     function startEdit(id, type, val, date) {
+        pendingEditId = id;
+        document.querySelectorAll('.input-card').forEach(c => c.classList.remove('editing'));
+        
         if (type === 'rate') {
             document.getElementById('rateVal').value = val;
             document.getElementById('rateDate').value = date;
+            document.getElementById('rateInputCard').classList.add('editing');
             document.getElementById('rateVal').focus();
         } else {
             document.getElementById('transAmt').value = Math.abs(val);
             document.getElementById('transDate').value = date;
+            document.getElementById('moneyInputCard').classList.add('editing');
             document.getElementById('transAmt').focus();
         }
-        db.accounts[db.current] = db.accounts[db.current].filter(x => x.id !== id);
         runCalculation();
     }
 
@@ -180,22 +191,18 @@
     function runCalculation() {
         const history = db.accounts[db.current] || [];
         const sorted = [...history].sort((a,b) => new Date(a.date) - new Date(b.date));
-        
-        const targetInput = document.getElementById('targetDate').value;
-        const targetDate = new Date(targetInput);
+        const targetDate = new Date(document.getElementById('targetDate').value);
         targetDate.setHours(0,0,0,0);
-        
-        const today = new Date(); 
-        today.setHours(0,0,0,0);
+        const today = new Date(); today.setHours(0,0,0,0);
         
         const isPredicting = targetDate > today;
         document.getElementById('mainCard').className = isPredicting ? 'display-card is-predicting' : 'display-card';
         document.getElementById('predictLabel').innerText = isPredicting ? "🔭 預測至" : "📅 結算至";
 
         let p = 0, r = 0, acc = 0, html = "";
-        if (sorted.length === 0) { updateUI(0,0); document.getElementById('logList').innerHTML = ""; return; }
-
-        let iter = new Date(sorted[0].date); iter.setHours(0,0,0,0);
+        let iter = (sorted.length > 0) ? new Date(sorted[0].date) : new Date();
+        iter.setHours(0,0,0,0);
+        
         while (iter <= targetDate) {
             const dStr = iter.toLocaleDateString('sv-SE');
             sorted.filter(x => x.date === dStr).forEach(item => {
@@ -209,8 +216,8 @@
                     sign = item.type === 'dep' ? "+" : "-";
                     amtClass = item.type === 'dep' ? "amt-pos" : "amt-neg";
                 }
-                
-                html = `<div class="log-item">
+                const isEditingThis = (item.id === pendingEditId);
+                html = `<div class="log-item ${isEditingThis ? 'being-edited' : ''}">
                     <div class="log-info">
                         <span class="log-date">${item.date}</span><br>
                         <span style="font-size:12px; font-weight:500;">${name}</span>
@@ -232,7 +239,7 @@
             iter.setDate(iter.getDate() + 1);
         }
         updateUI(p, acc);
-        document.getElementById('logList').innerHTML = html;
+        document.getElementById('logList').innerHTML = html || '<div style="padding:20px; text-align:center; color:#ccc;">尚無紀錄</div>';
     }
 
     function updateUI(p, acc) {
