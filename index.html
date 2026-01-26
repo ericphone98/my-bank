@@ -3,20 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>智能存摺</title>
+    <title>智能存摺 (多帳戶版)</title>
     <style>
         :root { --hk-blue: #007aff; --hk-orange: #ff9500; --bg: #f2f2f7; --card-bg: #ffffff; --danger: #ff3b30; --predict: #5856d6; --withdraw: #ff453a; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 12px; padding-bottom: 60px; }
         .container { max-width: 420px; margin: auto; }
-        .display-card { background: var(--hk-blue); color: white; padding: 25px 20px; border-radius: 20px; text-align: center; margin-bottom: 15px; box-shadow: 0 8px 16px rgba(0,122,255,0.15); }
-        .is-predicting { background: var(--predict); }
+        
+        /* 帳戶切換列 */
+        .account-tabs { display: flex; gap: 10px; overflow-x: auto; padding: 5px 0 15px 0; scrollbar-width: none; }
+        .account-tabs::-webkit-scrollbar { display: none; }
+        .tab { padding: 8px 16px; background: #e5e5ea; border-radius: 20px; font-size: 14px; white-space: nowrap; cursor: pointer; color: #3a3a3c; border: none; }
+        .tab.active { background: var(--hk-blue); color: white; font-weight: bold; }
+        .add-tab { background: #d1d1d6; font-weight: bold; }
+
+        .display-card { background: var(--hk-blue); color: white; padding: 25px 20px; border-radius: 20px; text-align: center; margin-bottom: 15px; box-shadow: 0 8px 16px rgba(0,122,255,0.15); transition: background 0.3s; }
         .amount { font-size: 36px; font-weight: bold; margin: 10px 0; display: block; letter-spacing: -1px; }
         .breakdown { font-size: 14px; opacity: 0.9; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 10px; display: inline-block; margin-top: 5px; }
         .input-card { background: var(--card-bg); padding: 18px; border-radius: 18px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .editing-mode { border: 2px solid var(--hk-orange); background: #fffdf5; }
-        .compact-row { display: flex; gap: 10px; margin-bottom: 12px; }
         label { display: block; font-size: 12px; color: #8e8e93; margin-bottom: 4px; font-weight: bold; }
-        input { width: 100%; padding: 12px; border: 1px solid #d1d1d6; border-radius: 10px; font-size: 16px; box-sizing: border-box; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #d1d1d6; border-radius: 10px; font-size: 16px; box-sizing: border-box; }
         .btn-row { display: flex; gap: 10px; }
         .btn { flex: 1; padding: 14px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; color: white; font-size: 16px; }
         .btn-blue { background: var(--hk-blue); }
@@ -36,8 +41,11 @@
 <div class="container">
     <div id="syncStatus">● 準備就緒</div>
 
+    <div class="account-tabs" id="accountTabs">
+        </div>
+
     <div class="display-card" id="mainCard">
-        <small>總資產 (本金 + 利息)</small>
+        <small id="accountTitle">正在載入...</small>
         <span class="amount" id="totalDisplay">HK$ 0.00</span>
         <div class="breakdown" id="breakdownDisplay">本金: 0.00 | 未結利息: 0.00</div>
     </div>
@@ -47,42 +55,38 @@
         <input type="date" id="targetDate" onchange="runCalculation()">
     </div>
 
-    <div class="input-card" id="moneyCard">
-        <div class="compact-row">
+    <div class="input-card">
+        <div class="btn-row">
             <div style="flex: 1;"><label>💰 金額</label><input type="number" id="transAmt" step="0.01" placeholder="0.00" inputmode="decimal"></div>
             <div style="flex: 1;"><label>📅 日期</label><input type="date" id="transDate"></div>
         </div>
-        <div class="btn-row" id="normalBtns">
-            <button class="btn btn-blue" onclick="submitTransaction('dep')">📥 存入 (+)</button>
-            <button class="btn btn-red" onclick="submitTransaction('with')">📤 提款 (-)</button>
-        </div>
-        <div class="btn-row" id="editBtns" style="display:none;">
-            <button class="btn btn-orange" onclick="confirmEdit()">✅ 確認修改</button>
-            <button class="btn" style="background:#8e8e93; color:white;" onclick="cancelEdit()">取消</button>
+        <div class="btn-row" style="margin-top:12px;">
+            <button class="btn btn-blue" onclick="submitTransaction('dep')">📥 存入</button>
+            <button class="btn btn-red" onclick="submitTransaction('with')">📤 提款</button>
         </div>
     </div>
 
-    <div class="input-card" id="rateCard" style="border-left: 5px solid var(--hk-orange);">
-        <div class="compact-row">
+    <div class="input-card" style="border-left: 5px solid var(--hk-orange);">
+        <div class="btn-row">
             <div style="flex: 1;"><label>📈 年利率 %</label><input type="number" id="rateVal" step="0.01" placeholder="3.25" inputmode="decimal"></div>
             <div style="flex: 1;"><label>📅 生效日期</label><input type="date" id="rateDate"></div>
         </div>
-        <button class="btn btn-orange" id="rateBtn" style="width:100%" onclick="submitRate()">🚀 更新利率</button>
-        <button class="btn" id="rateCancelBtn" style="margin-top:5px; width:100%; background:#8e8e93; display:none;" onclick="cancelEdit()">取消修改</button>
+        <button class="btn btn-orange" style="width:100%; margin-top:12px;" onclick="submitRate()">🚀 更新利率</button>
     </div>
 
     <div id="logList" style="border-radius: 15px; overflow: hidden; background:white; box-shadow: 0 2px 10px rgba(0,0,0,0.05);"></div>
     
     <div style="display: flex; gap: 10px; margin-top: 30px;">
-        <button style="flex: 1; background:none; border:none; color:#8e8e93; font-size:12px;" onclick="pullFromCloud()">🔄 強制刷新雲端</button>
+        <button style="flex: 1; background:none; border:none; color:#c7c7cc; font-size:12px;" onclick="deleteCurrentAccount()">🗑️ 刪除此帳戶</button>
         <button style="flex: 1; background:none; border:none; color:#c7c7cc; font-size:12px;" onclick="clearAllData()">⚠️ 清空所有資料</button>
     </div>
 </div>
 
 <script>
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwjWG0VNOh5X-XigkCtX24GiaDxIvm9EgNVY8iQwg36mAr2TUVtArqq9pFSIReP3MQv/exec';
-    let history = [];
-    let editingId = null;
+    
+    // 資料結構：{ currentAccount: "預設帳戶", accounts: { "預設帳戶": [歷史紀錄], "旅遊": [] } }
+    let db = { currentAccount: "預設帳戶", accounts: { "預設帳戶": [] } };
 
     const todayStr = new Date().toISOString().split('T')[0];
     document.getElementById('transDate').value = todayStr;
@@ -95,7 +99,11 @@
         try {
             const resp = await fetch(`${SCRIPT_URL}?action=read`);
             const text = await resp.text();
-            history = JSON.parse(text || "[]");
+            const cloudData = JSON.parse(text || "{}");
+            if (cloudData.accounts) {
+                db = cloudData;
+            }
+            renderTabs();
             runCalculation();
             status.innerText = "● 雲端已同步";
             status.style.color = "#34c759";
@@ -107,7 +115,7 @@
 
     async function pushToCloud() {
         document.getElementById('syncStatus').innerText = "📤 儲存中...";
-        const dataStr = encodeURIComponent(JSON.stringify(history));
+        const dataStr = encodeURIComponent(JSON.stringify(db));
         try {
             await fetch(`${SCRIPT_URL}?action=write&data=${dataStr}`, { mode: 'no-cors' });
             runCalculation();
@@ -117,11 +125,49 @@
         }
     }
 
+    function renderTabs() {
+        const container = document.getElementById('accountTabs');
+        let html = '';
+        Object.keys(db.accounts).forEach(name => {
+            html += `<button class="tab ${name === db.currentAccount ? 'active' : ''}" onclick="switchAccount('${name}')">${name}</button>`;
+        });
+        html += `<button class="tab add-tab" onclick="addAccount()">+ 新增</button>`;
+        container.innerHTML = html;
+        document.getElementById('accountTitle').innerText = db.currentAccount;
+    }
+
+    function switchAccount(name) {
+        db.currentAccount = name;
+        renderTabs();
+        runCalculation();
+    }
+
+    function addAccount() {
+        const name = prompt("請輸入新帳戶名稱 (例如：旅遊、投資)：");
+        if (name && !db.accounts[name]) {
+            db.accounts[name] = [];
+            db.currentAccount = name;
+            pushToCloud();
+        } else if (db.accounts[name]) {
+            alert("帳戶名稱已存在");
+        }
+    }
+
+    function deleteCurrentAccount() {
+        const names = Object.keys(db.accounts);
+        if (names.length <= 1) return alert("至少需保留一個帳戶");
+        if (confirm(`確定刪除帳戶「${db.currentAccount}」嗎？所有資料將消失。`)) {
+            delete db.accounts[db.currentAccount];
+            db.currentAccount = Object.keys(db.accounts)[0];
+            pushToCloud();
+        }
+    }
+
     function submitTransaction(type) {
         let val = parseFloat(document.getElementById('transAmt').value);
         if (isNaN(val) || val <= 0) return alert("請輸入金額");
         val = Math.round(val * 100) / 100;
-        history.push({ id: Date.now(), type: type, date: document.getElementById('transDate').value, value: val });
+        db.accounts[db.currentAccount].push({ id: Date.now(), type: type, date: document.getElementById('transDate').value, value: val });
         document.getElementById('transAmt').value = '';
         pushToCloud();
     }
@@ -129,61 +175,20 @@
     function submitRate() {
         const val = parseFloat(document.getElementById('rateVal').value);
         if (isNaN(val)) return alert("請輸入利率");
-        if (editingId) {
-            const idx = history.findIndex(h => h.id === editingId);
-            if (idx !== -1) { history[idx].date = document.getElementById('rateDate').value; history[idx].value = val; }
-            cancelEdit();
-        } else {
-            history.push({ id: Date.now(), type: 'rate', date: document.getElementById('rateDate').value, value: val });
-        }
+        db.accounts[db.currentAccount].push({ id: Date.now(), type: 'rate', date: document.getElementById('rateDate').value, value: val });
         document.getElementById('rateVal').value = '';
         pushToCloud();
     }
 
-    function confirmEdit() {
-        let val = parseFloat(document.getElementById('transAmt').value);
-        val = Math.round(val * 100) / 100;
-        const idx = history.findIndex(h => h.id === editingId);
-        if (idx !== -1) { history[idx].value = val; history[idx].date = document.getElementById('transDate').value; }
-        cancelEdit();
-        pushToCloud();
-    }
-
-    function cancelEdit() {
-        editingId = null;
-        document.querySelectorAll('.input-card').forEach(c => c.classList.remove('editing-mode'));
-        document.getElementById('normalBtns').style.display = 'flex';
-        document.getElementById('editBtns').style.display = 'none';
-        document.getElementById('rateBtn').innerText = "🚀 更新利率";
-        document.getElementById('rateCancelBtn').style.display = 'none';
-        document.getElementById('transAmt').value = '';
-        document.getElementById('rateVal').value = '';
-    }
-
-    function startEdit(id) {
-        const item = history.find(h => h.id === id);
-        if (!item) return;
-        editingId = id;
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        if (item.type === 'rate') {
-            document.getElementById('rateCard').classList.add('editing-mode');
-            document.getElementById('rateVal').value = item.value;
-            document.getElementById('rateDate').value = item.date;
-            document.getElementById('rateBtn').innerText = "✅ 儲存修改";
-            document.getElementById('rateCancelBtn').style.display = 'block';
-        } else {
-            document.getElementById('moneyCard').classList.add('editing-mode');
-            document.getElementById('transAmt').value = item.value.toFixed(2);
-            document.getElementById('transDate').value = item.date;
-            document.getElementById('normalBtns').style.display = 'none';
-            document.getElementById('editBtns').style.display = 'flex';
+    function deleteRecord(id) {
+        if(confirm("確定刪除此紀錄？")) {
+            db.accounts[db.currentAccount] = db.accounts[db.currentAccount].filter(h => h.id !== id);
+            pushToCloud();
         }
     }
-
-    function deleteRecord(id) { if(confirm("確定刪除？")) { history = history.filter(h => h.id !== id); pushToCloud(); } }
-    function clearAllData() { if(confirm("確定清空？")) { history = []; pushToCloud(); } }
 
     function runCalculation() {
+        const history = db.accounts[db.currentAccount] || [];
         const sorted = [...history].sort((a, b) => new Date(a.date) - new Date(b.date));
         const targetStr = document.getElementById('targetDate').value;
         const interestEndDate = new Date(targetStr); interestEndDate.setHours(0,0,0,0);
@@ -195,7 +200,6 @@
         let iter = new Date(sorted[0].date); iter.setHours(0,0,0,0);
 
         while (iter <= renderEndDate) {
-            // 1. 處理並顯示當天交易
             sorted.forEach(item => {
                 if (new Date(item.date).toDateString() === iter.toDateString()) {
                     let rowHtml = "";
@@ -210,18 +214,16 @@
                         p -= item.value; 
                         rowHtml = `<div><span class="log-date">${item.date}</span><span>📤 提款</span></div><span class="log-amt amt-neg">-${displayVal}</span>`; 
                     }
-                    logHtml = `<div class="log-item">${rowHtml}<div class="action-btns"><button onclick="startEdit(${item.id})">✏️</button><button onclick="deleteRecord(${item.id})">🗑️</button></div></div>` + logHtml;
+                    logHtml = `<div class="log-item">${rowHtml}<div class="action-btns"><button onclick="deleteRecord(${item.id})">🗑️</button></div></div>` + logHtml;
                 }
             });
 
-            // 2. 複利結算 (修正時區問題，強制顯示本地 1 號)
             if (iter.getDate() === 1 && acc > 0) {
                 p += acc;
                 const y = iter.getFullYear();
                 const m = String(iter.getMonth() + 1).padStart(2, '0');
                 const d = String(iter.getDate()).padStart(2, '0');
                 const localDateStr = `${y}-${m}-${d}`;
-
                 logHtml = `<div class="log-item" style="background:#f0faff">
                     <div><span class="log-date">${localDateStr}</span><span style="font-size:12px; font-weight:bold; color:#007aff">🔄 利息自動過帳</span></div>
                     <span class="log-amt amt-int">+${acc.toFixed(2)}</span><div style="width:40px"></div>
@@ -229,7 +231,6 @@
                 acc = 0;
             }
 
-            // 3. 計息判斷 (過夜息邏輯)
             if (iter < interestEndDate && p > 0 && r > 0) {
                 acc += (p * r) / 365;
             }
@@ -243,6 +244,13 @@
         const total = principal + pendingInterest;
         document.getElementById('totalDisplay').innerText = `HK$ ${total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
         document.getElementById('breakdownDisplay').innerText = `本金: $${principal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} | 未結利息: $${pendingInterest.toFixed(2)}`;
+    }
+
+    function clearAllData() {
+        if(confirm("⚠️ 注意：這將清空【所有帳戶】的全部資料，且無法還原！確定嗎？")) {
+            db = { currentAccount: "預設帳戶", accounts: { "預設帳戶": [] } };
+            pushToCloud();
+        }
     }
 
     pullFromCloud();
