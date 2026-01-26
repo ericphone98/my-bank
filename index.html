@@ -17,7 +17,7 @@
 
         .display-card { background: var(--hk-blue); color: white; padding: 12px 15px 18px 15px; border-radius: 18px; text-align: left; margin-bottom: 8px; position: relative; }
         .display-card.is-predicting { background: var(--predict); }
-        .card-header { display: flex; justify-content: space-between; align-items: flex-start; }
+        .card-header { display: flex; justify-content: flex-end; align-items: flex-start; }
         .amount { font-size: 32px; font-weight: bold; margin: 0; display: block; }
         .breakdown { font-size: 11px; opacity: 0.85; margin-top: 4px; }
         
@@ -25,7 +25,6 @@
         .predict-box label { color: rgba(255,255,255,0.7); font-size: 9px; display: block; }
         .predict-box input { background: rgba(255,255,255,0.2); border: none; color: white; font-size: 10px; padding: 0 5px; border-radius: 6px; width: 105px; height: 24px; line-height: 24px; outline: none; }
 
-        /* 還原後的標準框架樣式 */
         .input-card { background: var(--card-bg); padding: 10px; border-radius: 14px; margin-bottom: 6px; border: 2px solid transparent; transition: all 0.2s; }
         .input-card.editing { border-color: var(--hk-orange); background: #fffdf5; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
         
@@ -72,7 +71,6 @@
 
         <div class="display-card" id="mainCard">
             <div class="card-header">
-                <small id="accountTitle" style="font-weight: bold;">帳戶</small>
                 <div class="predict-box">
                     <label id="predictLabel">📅 今日</label>
                     <input type="date" id="targetDate" onchange="runCalculation()">
@@ -270,7 +268,7 @@
                 html = `<div class="log-item ${isEditingThis ? 'being-edited' : ''}">
                     <div class="log-info"><span class="log-date">${item.date}</span><br><span style="font-size:12px; font-weight:500;">${name}</span></div>
                     <div class="action-group">
-                        <span class="log-amt ${amtClass}">${sign}${item.type==='rate' ? '' : item.value.toLocaleString(undefined,{minimumFractionDigits:2})}</span>
+                        <span class="log-amt ${amtClass}">${sign}${item.type==='rate' ? '' : item.value.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}</span>
                         <button class="icon-btn" onclick="startEdit(${item.id}, '${item.type}', ${item.value}, '${item.date}')">✏️</button>
                         <button class="icon-btn" style="opacity:0.2" onclick="delRecord(${item.id})">🗑️</button>
                     </div>
@@ -289,8 +287,8 @@
     }
 
     function updateUI(p, acc) {
-        document.getElementById('totalDisplay').innerText = `HK$ ${(p+acc).toLocaleString(undefined,{minimumFractionDigits:2})}`;
-        document.getElementById('breakdownDisplay').innerText = `本金: ${p.toLocaleString()} | 利息: ${acc.toFixed(2)}`;
+        document.getElementById('totalDisplay').innerText = `HK$ ${(p+acc).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`;
+        document.getElementById('breakdownDisplay').innerText = `本金: ${p.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})} | 利息: ${acc.toFixed(2)}`;
     }
     pull();
 </script>
