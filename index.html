@@ -26,12 +26,12 @@
         .predict-box label { color: rgba(255,255,255,0.7); font-size: 9px; display: block; margin-bottom: 2px; }
         .predict-box input { background: rgba(255,255,255,0.2); border: none; color: white; font-size: 10px; padding: 0 5px; border-radius: 6px; width: 100% !important; height: 22px; text-align: center; outline: none; }
 
-        .input-card { background: var(--card-bg); padding: 12px; border-radius: 12px; margin-bottom: 6px; border-left: 3px solid transparent; border-right: 3px solid transparent; }
+        .input-card { background: var(--card-bg); padding: 12px; border-radius: 12px; margin-bottom: 6px; border-left: 3.5px solid transparent; border-right: 3.5px solid transparent; }
         #rateInputCard { border-left-color: var(--hk-orange); border-right-color: var(--hk-orange); }
         #moneyInputCard { border-left-color: var(--hk-blue); border-right-color: var(--hk-blue); }
 
         .scope-selector { display: flex; background: #f2f2f7; border-radius: 8px; padding: 2px; margin-bottom: 10px; }
-        .scope-btn { flex: 1; border: none; background: none; font-size: 10px; padding: 4px 0; border-radius: 6px; color: #8e8e93; }
+        .scope-btn { flex: 1; border: none; background: none; font-size: 10px; padding: 6px 0; border-radius: 6px; color: #8e8e93; }
         .scope-btn.active { background: white; color: var(--hk-orange); font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 
         .input-row { display: flex; flex-direction: column; gap: 10px; }
@@ -39,9 +39,9 @@
         .field-num, .field-date { flex: 1; min-width: 0; }
         label { display: block; font-size: 9px; color: #8e8e93; margin-bottom: 3px; font-weight: bold; }
         
-        input { width: 100%; padding: 0; border: 1px solid #d1d1d6; border-radius: 8px; font-size: 14px; background: #f9f9f9; height: 36px; text-align: center; -webkit-appearance: none; }
+        input { width: 100%; padding: 0; border: 1px solid #d1d1d6; border-radius: 8px; font-size: 14px; background: #f9f9f9; height: 38px; text-align: center; -webkit-appearance: none; }
 
-        .btn { width: 100%; border: none; border-radius: 8px; font-weight: bold; color: white; font-size: 14px; height: 38px; }
+        .btn { width: 100%; border: none; border-radius: 8px; font-weight: bold; color: white; font-size: 14px; height: 40px; }
         .btn-blue { background: var(--hk-blue); }
         .btn-red { background: var(--withdraw); }
         .btn-orange { background: var(--hk-orange); }
@@ -50,12 +50,12 @@
 
         /* 紀錄列表對齊優化 */
         .log-section { flex: 1; background: white; border-radius: 20px 20px 0 0; display: flex; flex-direction: column; overflow: hidden; border-top: 1px solid #e5e5ea; position: relative; }
-        #logList { overflow-y: auto; flex: 1; padding-bottom: 60px; }
-        .log-item { display: flex; padding: 12px 15px; border-bottom: 1px solid #f2f2f7; align-items: center; justify-content: space-between; }
+        #logList { overflow-y: auto; flex: 1; padding-bottom: 70px; }
+        .log-item { display: flex; padding: 12px 15px; border-bottom: 1px solid #f2f2f7; align-items: center; }
         
-        .log-info { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+        .log-info { flex: 1; display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
         .log-date { font-size: 10px; color: #8e8e93; line-height: 1.2; }
-        .log-type-label { font-size: 12px; font-weight: 500; line-height: 1.4; }
+        .log-type-label { font-size: 12px; font-weight: 500; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .log-rate-highlight { color: var(--hk-orange); }
         
         .log-amt { 
@@ -63,16 +63,18 @@
             font-weight: 600; 
             font-size: 14px; 
             text-align: right; 
-            width: 100px; /* 固定寬度確保小數點對齊 */
-            margin-right: 10px;
+            width: 110px; /* 固定寬度 */
+            margin-right: 12px;
+            flex-shrink: 0;
         }
-        .action-group { display: flex; gap: 10px; flex-shrink: 0; }
-        .icon-svg { width: 18px; height: 18px; fill: #b0b0b7; padding: 2px; }
+        /* 固定按鈕組寬度，確保有無按鈕時，左邊的數字位置都不動 */
+        .action-group { display: flex; gap: 10px; width: 46px; justify-content: flex-end; flex-shrink: 0; }
+        .icon-svg { width: 18px; height: 18px; fill: #b0b0b7; }
         .amt-pos { color: #34c759; }
         .amt-neg { color: var(--withdraw); }
 
-        .bottom-bar { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.85); backdrop-filter: blur(10px); padding: 8px 15px calc(8px + env(safe-area-inset-bottom)); display: flex; justify-content: center; gap: 20px; border-top: 0.5px solid #e5e5ea; }
-        .btn-small-mng { background: none; border: 1px solid #e5e5ea; color: #8e8e93; font-size: 10px; padding: 4px 10px; border-radius: 10px; }
+        .bottom-bar { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.85); backdrop-filter: blur(10px); padding: 8px 15px calc(10px + env(safe-area-inset-bottom)); display: flex; justify-content: center; gap: 20px; border-top: 0.5px solid #e5e5ea; }
+        .btn-small-mng { background: none; border: 1px solid #e5e5ea; color: #8e8e93; font-size: 10px; padding: 4px 12px; border-radius: 10px; }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -90,7 +92,7 @@
                 </div>
             </div>
             <span class="amount" id="totalDisplay">HK$ 0.00</span>
-            <div class="breakdown" id="breakdownDisplay">本金: 0.00 | 利息: 0.00</div>
+            <div class="breakdown" id="breakdownDisplay">本金: 0.00 | 未結利息: 0.00</div>
         </div>
 
         <div class="input-card" id="rateInputCard">
@@ -100,7 +102,7 @@
             </div>
             <div id="rateNormalUI" class="input-row">
                 <div class="fields-container">
-                    <div class="field-num"><label>📈 年利率 %</label><input type="number" id="rateVal" step="0.01" inputmode="decimal" placeholder="最新: 0.00"></div>
+                    <div class="field-num"><label>📈 年利率 %</label><input type="number" id="rateVal" step="0.01" inputmode="decimal" placeholder="0.00"></div>
                     <div class="field-date"><label>📅 生效日期</label><input type="date" id="rateDate"></div>
                 </div>
                 <button class="btn btn-orange" onclick="handleRateUpdate()">更新利率</button>
@@ -114,8 +116,8 @@
                     <div class="field-date"><label>📅 交易日期</label><input type="date" id="transDate"></div>
                 </div>
                 <div id="moneyActionBtns" style="display:flex; gap:8px;">
-                    <button class="btn btn-blue" id="depBtn" onclick="addRecord('dep')">📥 存入</button>
-                    <button class="btn btn-red" id="withBtn" onclick="addRecord('with')">📤 提取</button>
+                    <button class="btn btn-blue" onclick="addRecord('dep')">📥 存入</button>
+                    <button class="btn btn-red" onclick="addRecord('with')">📤 提取</button>
                 </div>
                 <div id="moneyEditBtns" class="hidden" style="display:flex; gap:8px;">
                     <button class="btn btn-success" onclick="confirmMoneyEdit()">儲存修改</button>
@@ -200,20 +202,18 @@
         push();
     }
 
-    // 編輯功能 - 觸發
     function startEdit(id, type, val, date) {
         pendingEditId = id;
         if (type === 'rate') {
             document.getElementById('rateVal').value = val;
             document.getElementById('rateDate').value = date;
-            window.scrollTo(0,0);
         } else {
             document.getElementById('transAmt').value = val;
             document.getElementById('transDate').value = date;
             document.getElementById('moneyActionBtns').classList.add('hidden');
             document.getElementById('moneyEditBtns').classList.remove('hidden');
-            window.scrollTo(0,0);
         }
+        window.scrollTo(0,0);
     }
 
     function cancelMoneyEdit() {
@@ -226,11 +226,10 @@
     function confirmMoneyEdit() {
         let val = document.getElementById('transAmt').value;
         let date = document.getElementById('transDate').value;
-        let oldRecord = db.accounts[db.current].find(x => x.id === pendingEditId);
-        if (!oldRecord) return cancelMoneyEdit();
-        
+        let old = db.accounts[db.current].find(x => x.id === pendingEditId);
+        if (!old) return cancelMoneyEdit();
         db.accounts[db.current] = db.accounts[db.current].filter(x => x.id !== pendingEditId);
-        db.accounts[db.current].push({ id: Date.now(), type: oldRecord.type, date, value: parseFloat(val) });
+        db.accounts[db.current].push({ id: Date.now(), type: old.type, date, value: parseFloat(val) });
         cancelMoneyEdit(); push();
     }
 
@@ -244,9 +243,8 @@
     function runCalculation() {
         const history = db.accounts[db.current] || [];
         const sorted = [...history].sort((a,b) => new Date(a.date) - new Date(b.date));
-        
         const rates = sorted.filter(x => x.type === 'rate');
-        document.getElementById('rateVal').placeholder = rates.length ? `目前: ${rates[rates.length-1].value}%` : "最新: 0.00";
+        document.getElementById('rateVal').placeholder = rates.length ? `目前: ${rates[rates.length-1].value}%` : "0.00";
 
         const inputDateStr = document.getElementById('targetDate').value;
         const inputDate = new Date(inputDateStr);
@@ -284,11 +282,12 @@
                 } else {
                     const sign = item.type==='dep'?'+':'-';
                     p += (item.type==='dep'?item.value:-item.value);
-                    html = `<div class="log-item"><div class="log-info"><span class="log-date">${item.date}</span><span class="log-type-label">${item.type==='dep'?'📥 存入':'📤 提取'}</span></div><span class="log-amt ${item.type==='dep'?'amt-pos':'amt-neg'}">${sign}${fmt(item.value)}</span><div class="action-group"><div onclick="startEdit(${item.id},'trans',${item.value},'${item.date}')">${editSvg}</div><div onclick="delRecord(${item.id})">${delSvg}</div></div></div>` + html;
+                    html = `<div class="log-item"><div class="log-info"><span class="log-date">${item.date}</span><span class="log-type-label">${item.type==='dep'?'📥 存入':'📤 提款'}</span></div><span class="log-amt ${item.type==='dep'?'amt-pos':'amt-neg'}">${sign}${fmt(item.value)}</span><div class="action-group"><div onclick="startEdit(${item.id},'trans',${item.value},'${item.date}')">${editSvg}</div><div onclick="delRecord(${item.id})">${delSvg}</div></div></div>` + html;
                 }
             });
             if (iter.getDate() === 1 && acc > 0) {
                 p += acc;
+                // 注意這裡：即便沒有按鈕，我們也給一個空的 action-group 佔位
                 html = `<div class="log-item" style="background:#f0faff"><div class="log-info"><span class="log-date">${dStr}</span><span class="log-type-label" style="color:var(--hk-blue);">🔄 利息存入</span></div><span class="log-amt amt-pos" style="color:var(--predict);">+${fmt(acc)}</span><div class="action-group"></div></div>` + html;
                 acc = 0;
             }
@@ -296,7 +295,7 @@
             iter.setDate(iter.getDate() + 1);
         }
         document.getElementById('totalDisplay').innerText = `HK$ ${fmt(p+acc)}`;
-        document.getElementById('breakdownDisplay').innerText = `本金: ${fmt(p)} | 利息: ${fmt(acc)}`;
+        document.getElementById('breakdownDisplay').innerText = `本金: ${fmt(p)} | 未結利息: ${fmt(acc)}`;
         document.getElementById('logList').innerHTML = html || '<div style="padding:20px; text-align:center; color:#ccc;">尚無紀錄</div>';
     }
     pull();
