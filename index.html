@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HKD 智能存摺</title>
+    <style>
+        :root { --hk-blue: #007aff; --hk-orange: #ff9500; --bg: #f2f2f7; --card-bg: #ffffff; --danger: #ff3b30; --predict: #5856d6; --withdraw: #ff453a; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 12px; padding-bottom: 60px; }
+        .container { max-width: 420px; margin: auto; }
+        .display-card { background: var(--hk-blue); color: white; padding: 25px 20px; border-radius: 20px; text-align: center; margin-bottom: 15px; box-shadow: 0 8px 16px rgba(0,122,255,0.15); }
+        .is-predicting { background: var(--predict); }
+        .amount { font-size: 36px; font-weight: bold; margin: 10px 0; display: block; letter-spacing: -1px; }
+        .breakdown { font-size: 14px; opacity: 0.9; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 10px; display: inline-block; margin-top: 5px; }
+        .input-card { background: var(--card-bg); padding: 18px; border-radius: 18px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .editing-mode { border: 2px solid var(--hk-orange); background: #fffdf5; }
+        .compact-row { display: flex; gap: 10px; margin-bottom: 12px; }
+        label { display: block; font-size: 12px; color: #8e8e93; margin-bottom: 4px; font-weight: bold; }
+        input { width: 100%; padding: 12px; border: 1px solid #d1d1d6; border-radius: 10px; font-size: 16px; box-sizing: border-box; }
+        .btn-row { display: flex; gap: 10px; }
+        .btn { flex: 1; padding: 14px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; color: white; font-size: 16px; }
+        .btn-blue { background: var(--hk-blue); }
+        .btn-red { background: var(--withdraw); }
+        .btn-orange { background: var(--hk-orange); }
+        .log-item { display: flex; justify-content: space-between; padding: 14px; border-bottom: 1px solid #f2f2f7; background: white; align-items: center; }
+        .log-date { font-size: 12px; color: #8e8e93; display: block; margin-top: 2px; }
+        .log-amt { font-weight: bold; font-size: 15px; }
+        .amt-pos { color: #34c759; }
+        .amt-neg { color: var(--withdraw); }
+        .amt-int { color: var(--predict); }
+        .action-btns button { padding: 5px 10px; border: none; background: none; font-size: 16px; cursor: pointer; }
+        #syncStatus { text-align:center; font-size:11px; color:#8e8e93; margin-bottom:5px; font-weight: bold; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div id="syncStatus">● 準備就緒</div>
+
+    <div class="display-card" id="mainCard">
+        <small>總資產 (本金 + 利息)</small>
+        <span class="amount" id="totalDisplay">HK$ 0.00</span>
+        <div class="breakdown" id="breakdownDisplay">本金: 0.00 | 利息: 0.00</div>
+    </div>
+
+    <div class="input-card" style="border: 2px solid var(--predict);">
+        <label>🔭 計算截止日期 (預測)：</label>
+        <input type="date" id="targetDate" onchange="runCalculation()">
+    </div>
+
+    <div class="input-card" id="moneyCard">
+        <div class="compact-row">
+            <div style="flex: 1;"><label>💰 金額</label><input type="number" id="transAmt" step="0.01" placeholder="0.00" inputmode="decimal"></div>
+            <div style="flex: 1;"><label>📅 日期</label><input type="date" id="transDate"></div>
+        </div>
+        <div class="btn-row" id="normalBtns">
+            <button class="btn btn-blue" onclick="submitTransaction('dep')">📥 存入 (+)</button>
+            <button class="btn btn-red" onclick="submitTransaction('with')">📤 提款 (-)</button>
+        </div>
+        <div class="btn-row" id="editBtns" style="display:none;">
+            <button class="btn btn-orange" onclick="confirmEdit()">✅ 確認修改</button>
+            <button class="btn" style="background:#8e8e93; color:white;" onclick="cancelEdit()">取消</button>
+        </div>
+    </div>
+
+    <div class="input-card" id="rateCard" style="border-left: 5px solid var(--hk-orange);">
+        <div class="compact-row">
+            <div style="flex: 1;"><label>📈 年利率 %</label><input type="number" id="rateVal" step="0.01" placeholder="3.25" inputmode="decimal"></div>
+            <div style="flex: 1;"><label>📅 生效日期</label><input type="date" id="rateDate"></div>
+        </div>
+        <button class="btn btn-orange" id="rateBtn" style="width:100%" onclick="submitRate()">🚀 更新利率</button>
+        <button class="btn" id="rateCancelBtn" style="margin-top:5px; width:100%; background:#8e8e93; display:none;" onclick="cancelEdit()">取消修改</button>
+    </div>
+
+    <div id="logList" style="border-radius: 15px; overflow: hidden; background:white; box-shadow: 0 2px 10px rgba(0,0,0,0.05);"></div>
+    
+    <div style="display: flex; gap: 10px; margin-top: 30px;">
+        <button style="flex: 1; background:none; border:none; color:#8e8e93; font-size:12px;" onclick="pullFromCloud()">🔄 強制刷新雲端</button>
+        <button style="flex: 1; background:none; border:none; color:#c7c7cc; font-size:12px;" onclick="clearAllData()">⚠️ 清空所有資料</button>
+    </div>
+</div>
+
+<script>
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwjWG0VNOh5X-XigkCtX24GiaDxIvm9EgNVY8iQwg36mAr2TUVtArqq9pFSIReP3MQv/exec';
+    let history = [];
+    let editingId = null;
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    document.getElementById('transDate').value = todayStr;
+    document.getElementById('rateDate').value = todayStr;
+    document.getElementById('targetDate').value = todayStr;
+
+    async function pullFromCloud() {
+        const status = document.getElementById('syncStatus');
+        status.innerText = "🔄 同步中...";
+        try {
+            const resp = await fetch(`${SCRIPT_URL}?action=read`);
+            const text = await resp.text();
+            history = JSON.parse(text || "[]");
+            runCalculation();
+            status.innerText = "● 雲端已同步";
+            status.style.color = "#34c759";
+        } catch (e) {
+            status.innerText = "× 同步失敗";
+            status.style.color = "red";
+        }
+    }
+
+    async function pushToCloud() {
+        document.getElementById('syncStatus').innerText = "📤 儲存中...";
+        const dataStr = encodeURIComponent(JSON.stringify(history));
+        try {
+            await fetch(`${SCRIPT_URL}?action=write&data=${dataStr}`, { mode: 'no-cors' });
+            runCalculation();
+            setTimeout(pullFromCloud, 1000); 
+        } catch (e) {
+            document.getElementById('syncStatus').innerText = "× 儲存失敗";
+        }
+    }
+
+    function submitTransaction(type) {
+        let val = parseFloat(document.getElementById('transAmt').value);
+        if (isNaN(val) || val <= 0) return alert("請輸入金額");
+        val = Math.round(val * 100) / 100; // 強制 2dp
+        history.push({ id: Date.now(), type: type, date: document.getElementById('transDate').value, value: val });
+        document.getElementById('transAmt').value = '';
+        pushToCloud();
+    }
+
+    function submitRate() {
+        const val = parseFloat(document.getElementById('rateVal').value);
+        if (isNaN(val)) return alert("請輸入利率");
+        if (editingId) {
+            const idx = history.findIndex(h => h.id === editingId);
+            if (idx !== -1) { history[idx].date = document.getElementById('rateDate').value; history[idx].value = val; }
+            cancelEdit();
+        } else {
+            history.push({ id: Date.now(), type: 'rate', date: document.getElementById('rateDate').value, value: val });
+        }
+        document.getElementById('rateVal').value = '';
+        pushToCloud();
+    }
+
+    function confirmEdit() {
+        let val = parseFloat(document.getElementById('transAmt').value);
+        val = Math.round(val * 100) / 100;
+        const idx = history.findIndex(h => h.id === editingId);
+        if (idx !== -1) { history[idx].value = val; history[idx].date = document.getElementById('transDate').value; }
+        cancelEdit();
+        pushToCloud();
+    }
+
+    function cancelEdit() {
+        editingId = null;
+        document.querySelectorAll('.input-card').forEach(c => c.classList.remove('editing-mode'));
+        document.getElementById('normalBtns').style.display = 'flex';
+        document.getElementById('editBtns').style.display = 'none';
+        document.getElementById('rateBtn').innerText = "🚀 更新利率";
+        document.getElementById('rateCancelBtn').style.display = 'none';
+        document.getElementById('transAmt').value = '';
+        document.getElementById('rateVal').value = '';
+    }
+
+    function startEdit(id) {
+        const item = history.find(h => h.id === id);
+        if (!item) return;
+        editingId = id;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        if (item.type === 'rate') {
+            document.getElementById('rateCard').classList.add('editing-mode');
+            document.getElementById('rateVal').value = item.value;
+            document.getElementById('rateDate').value = item.date;
+            document.getElementById('rateBtn').innerText = "✅ 儲存修改";
+            document.getElementById('rateCancelBtn').style.display = 'block';
+        } else {
+            document.getElementById('moneyCard').classList.add('editing-mode');
+            document.getElementById('transAmt').value = item.value.toFixed(2);
+            document.getElementById('transDate').value = item.date;
+            document.getElementById('normalBtns').style.display = 'none';
+            document.getElementById('editBtns').style.display = 'flex';
+        }
+    }
+
+    function deleteRecord(id) { if(confirm("確定刪除？")) { history = history.filter(h => h.id !== id); pushToCloud(); } }
+    function clearAllData() { if(confirm("確定清空？")) { history = []; pushToCloud(); } }
+
+    function runCalculation() {
+        const sorted = [...history].sort((a, b) => new Date(a.date) - new Date(b.date));
+        const targetStr = document.getElementById('targetDate').value;
+        const interestEndDate = new Date(targetStr); interestEndDate.setHours(0,0,0,0);
+        const renderEndDate = new Date(targetStr); renderEndDate.setHours(23,59,59,999);
+
+        let p = 0, r = 0, acc = 0, logHtml = "";
+        if (sorted.length === 0) { updateDisplay(0, 0); document.getElementById('logList').innerHTML = ""; return; }
+
+        let iter = new Date(sorted[0].date); iter.setHours(0,0,0,0);
+
+        while (iter <= renderEndDate) {
+            sorted.forEach(item => {
+                if (new Date(item.date).toDateString() === iter.toDateString()) {
+                    let rowHtml = "";
+                    let displayVal = parseFloat(item.value).toFixed(2);
+                    if (item.type === 'rate') { 
+                        r = item.value / 100; 
+                        rowHtml = `<div><span class="log-date">${item.date}</span><span>📈 利率: ${item.value}%</span></div>`; 
+                    } else if (item.type === 'dep') { 
+                        p += item.value; 
+                        rowHtml = `<div><span class="log-date">${item.date}</span><span>📥 存入</span></div><span class="log-amt amt-pos">+${displayVal}</span>`; 
+                    } else if (item.type === 'with') { 
+                        p -= item.value; 
+                        rowHtml = `<div><span class="log-date">${item.date}</span><span>📤 提款</span></div><span class="log-amt amt-neg">-${displayVal}</span>`; 
+                    }
+                    logHtml = `<div class="log-item">${rowHtml}<div class="action-btns"><button onclick="startEdit(${item.id})">✏️</button><button onclick="deleteRecord(${item.id})">🗑️</button></div></div>` + logHtml;
+                }
+            });
+
+            if (iter.getDate() === 1 && acc > 0) {
+                p += acc;
+                logHtml = `<div class="log-item" style="background:#f0faff">
+                    <div><span class="log-date">${iter.toISOString().split('T')[0]}</span><span style="font-size:12px; font-weight:bold; color:#007aff">🔄 利息結算 (複利)</span></div>
+                    <span class="log-amt amt-int">+${acc.toFixed(2)}</span><div style="width:40px"></div>
+                </div>` + logHtml;
+                acc = 0;
+            }
+
+            if (iter < interestEndDate && p > 0 && r > 0) {
+                acc += (p * r) / 365;
+            }
+            iter.setDate(iter.getDate() + 1);
+        }
+        updateDisplay(p, acc);
+        document.getElementById('logList').innerHTML = logHtml;
+    }
+
+    function updateDisplay(principal, pendingInterest) {
+        const total = principal + pendingInterest;
+        document.getElementById('totalDisplay').innerText = `HK$ ${total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        document.getElementById('breakdownDisplay').innerText = `本金: $${principal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} | 利息: $${pendingInterest.toFixed(2)}`;
+    }
+
+    pullFromCloud();
+</script>
+</body>
+</html>
