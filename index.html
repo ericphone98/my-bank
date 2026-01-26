@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>智能存摺 Pro</title>
+    <title>活期存摺</title>
     <style>
         :root { --hk-blue: #007aff; --hk-orange: #ff9500; --bg: #f2f2f7; --card-bg: #ffffff; --predict: #5856d6; --withdraw: #ff453a; --predict-bg: #f5f3ff; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 12px; padding-bottom: 60px; }
@@ -48,11 +48,11 @@
     <div class="display-card" id="mainCard">
         <small id="accountTitle">帳戶</small> <span id="modeTag"></span>
         <span class="amount" id="totalDisplay">HK$ 0.00</span>
-        <div class="breakdown" id="breakdownDisplay">本金: 0.00 | 利息: 0.00</div>
+        <div class="breakdown" id="breakdownDisplay">本金: 0.00 | 未結利息: 0.00</div>
     </div>
 
     <div class="input-card" style="border: 2px solid var(--predict);">
-        <label>🔭 預測截止日期 (計算利息至該日凌晨)</label>
+        <label>🔭 預測日期</label>
         <input type="date" id="targetDate" onchange="runCalculation()">
     </div>
 
@@ -241,7 +241,7 @@
             if (iter.getDate() === 1 && acc > 0) {
                 p += acc;
                 html = `<div class="log-item ${isFuture?'predict-row':''}" style="background:${isFuture?'#f5f3ff':'#f0faff'}">
-                    <div class="log-info"><span class="log-date">${currentIterStr}${isFuture?' <span class="predict-tag">預估</span>':''}</span><span style="font-weight:bold;color:${isFuture?'var(--predict)':'var(--hk-blue)'}">🔄 利息自動轉本金</span></div>
+                    <div class="log-info"><span class="log-date">${currentIterStr}${isFuture?' <span class="predict-tag">預估</span>':''}</span><span style="font-weight:bold;color:${isFuture?'var(--predict)':'var(--hk-blue)'}">🔄 利息存入</span></div>
                     <span class="log-amt amt-int">+${acc.toFixed(2)}</span><div style="width:68px"></div>
                 </div>` + html;
                 acc = 0;
@@ -273,3 +273,4 @@
 </script>
 </body>
 </html>
+
