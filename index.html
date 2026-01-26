@@ -18,8 +18,8 @@
         .display-card { background: var(--hk-blue); color: white; padding: 12px 15px; border-radius: 18px; margin-bottom: 8px; transition: background 0.3s; }
         .display-card.is-predicting { background: var(--predict); }
         .card-header { display: flex; justify-content: flex-end; }
-        .amount { font-size: 32px; font-weight: bold; margin: 0; }
-        .breakdown { font-size: 11px; opacity: 0.85; margin-top: 4px; }
+        .amount { font-size: 32px; font-weight: bold; margin: 0; font-variant-numeric: tabular-nums; }
+        .breakdown { font-size: 11px; opacity: 0.85; margin-top: 4px; font-variant-numeric: tabular-nums; }
         
         .predict-box { text-align: right; }
         .predict-box label { color: rgba(255,255,255,0.7); font-size: 9px; display: block; margin-bottom: 2px; }
@@ -41,54 +41,31 @@
         .btn-success { background: var(--success); }
         .btn-gray { background: #8e8e93; }
 
-        /* 核心修復：垂直置中佈局 */
         .log-section { flex: 1; background: white; border-radius: 20px 20px 0 0; display: flex; flex-direction: column; overflow: hidden; border-top: 1px solid #e5e5ea; position: relative; }
         #logList { overflow-y: auto; flex: 1; padding-bottom: 60px; }
         
-        .log-item { 
-            display: flex; 
-            justify-content: space-between; 
-            padding: 14px 15px; 
-            border-bottom: 1px solid #f2f2f7; 
-            align-items: center; /* 關鍵：強制所有子元素在垂直中心對齊 */
-            min-height: 56px; /* 確保行高統一 */
-        }
-        
-        .log-info { 
-            flex: 1; 
-            min-width: 0; 
-            display: flex; 
-            flex-direction: column; 
-            justify-content: center; /* 確保左側文字垂直置中 */
-        }
-        
+        .log-item { display: flex; justify-content: space-between; padding: 12px 15px; border-bottom: 1px solid #f2f2f7; align-items: center; min-height: 52px; }
+        .log-info { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
         .log-date { font-size: 10px; color: #8e8e93; line-height: 1.2; }
-        .log-type-label { font-size: 12px; font-weight: 500; line-height: 1.4; margin-top: 2px; }
+        .log-type-label { font-size: 12px; font-weight: 500; line-height: 1.4; margin-top: 1px; }
         
+        /* 核心修正：縮小金額字體 */
         .log-amt { 
             font-family: -apple-system, sans-serif;
             font-variant-numeric: tabular-nums; 
-            font-weight: 700; 
-            font-size: 16px; 
+            font-weight: 600; 
+            font-size: 13px; /* 縮小至與左邊字體大小接近 */
             text-align: right; 
-            min-width: 100px;
+            min-width: 90px;
             margin-left: 10px;
             display: flex;
-            align-items: center; /* 數字內部對齊 */
+            align-items: center;
             justify-content: flex-end;
-            line-height: 1; /* 消除預設行高偏移 */
+            line-height: 1;
         }
 
-        .action-group { 
-            display: flex; 
-            align-items: center; 
-            gap: 12px; 
-            flex: 0 0 70px; 
-            justify-content: flex-end; 
-            margin-left: 10px;
-        }
-
-        .icon-svg { width: 18px; height: 18px; fill: #b0b0b7; cursor: pointer; }
+        .action-group { display: flex; align-items: center; gap: 12px; flex: 0 0 70px; justify-content: flex-end; margin-left: 8px; }
+        .icon-svg { width: 16px; height: 16px; fill: #b0b0b7; cursor: pointer; }
         .amt-pos { color: #34c759; }
         .amt-neg { color: var(--withdraw); }
         .amt-int { color: var(--predict); }
@@ -183,13 +160,17 @@
     const todayStr = new Date().toLocaleDateString('sv-SE');
     ['transDate', 'rateDate', 'targetDate'].forEach(id => document.getElementById(id).value = todayStr);
 
+    function fmt(num) {
+        return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
     async function pull() {
         try {
             const r = await fetch(`${SCRIPT_URL}?action=read`);
             const data = await r.json();
             if (data && data.accounts) db = data;
             renderTabs(); runCalculation();
-            document.getElementById('syncStatus').innerText = "● 雲端同步中";
+            document.getElementById('syncStatus').innerText = "● 雲端同步完成";
         } catch (e) { document.getElementById('syncStatus').innerText = "× 同步失敗"; }
     }
 
@@ -300,7 +281,7 @@
                         <span class="log-date">${item.date}</span>
                         <span class="log-type-label">${name}</span>
                     </div>
-                    <span class="log-amt ${amtClass}">${sign}${item.type==='rate' ? '' : item.value.toLocaleString(undefined,{minimumFractionDigits:2})}</span>
+                    <span class="log-amt ${amtClass}">${sign}${item.type==='rate' ? '' : fmt(item.value)}</span>
                     <div class="action-group">
                         <div onclick="startEdit(${item.id}, '${item.type}', ${item.value}, '${item.date}')">${editSvg}</div>
                         <div onclick="delRecord(${item.id})">${delSvg}</div>
@@ -314,7 +295,7 @@
                         <span class="log-date">${dStr}</span>
                         <span class="log-type-label" style="font-weight:bold;color:var(--hk-blue);">🔄 利息存入</span>
                     </div>
-                    <span class="log-amt amt-int">+${acc.toLocaleString(undefined,{minimumFractionDigits:2})}</span>
+                    <span class="log-amt amt-int">+${fmt(acc)}</span>
                     <div class="action-group"></div>
                 </div>` + html;
                 acc = 0;
@@ -322,8 +303,9 @@
             if (iter < inputDate && p > 0 && r > 0) acc += (p * r) / 365;
             iter.setDate(iter.getDate() + 1);
         }
-        document.getElementById('totalDisplay').innerText = `HK$ ${(p+acc).toLocaleString(undefined,{minimumFractionDigits:2})}`;
-        document.getElementById('breakdownDisplay').innerText = `本金: ${p.toLocaleString(undefined,{minimumFractionDigits:2})} | 利息: ${acc.toLocaleString(undefined,{minimumFractionDigits:2})}`;
+        
+        document.getElementById('totalDisplay').innerText = `HK$ ${fmt(p+acc)}`;
+        document.getElementById('breakdownDisplay').innerText = `本金: ${fmt(p)} | 利息: ${fmt(acc)}`;
         document.getElementById('logList').innerHTML = html || '<div style="padding:20px; text-align:center; color:#ccc;">尚無紀錄</div>';
     }
     pull();
