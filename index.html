@@ -16,7 +16,6 @@
         .tab.active { background: var(--hk-blue); color: white; font-weight: bold; }
 
         .display-card { background: var(--hk-blue); color: white; padding: 12px 15px; border-radius: 18px; margin-bottom: 8px; }
-        .display-card.is-predicting { background: var(--predict); }
         .amount { font-size: 32px; font-weight: bold; margin: 0; font-variant-numeric: tabular-nums; }
         .breakdown { font-size: 11px; opacity: 0.85; margin-top: 4px; }
         
@@ -31,6 +30,17 @@
         #rateInputCard { border-left-color: var(--hk-orange); border-right-color: var(--hk-orange); }
         #moneyInputCard { border-left-color: var(--hk-blue); border-right-color: var(--hk-blue); }
 
+        /* 更新對象選擇欄樣式 */
+        .scope-selector {
+            display: flex; background: #f2f2f7; border-radius: 8px; padding: 2px; margin-bottom: 10px;
+        }
+        .scope-btn {
+            flex: 1; border: none; background: none; font-size: 10px; padding: 4px 0; border-radius: 6px; color: #8e8e93; cursor: pointer; transition: 0.2s;
+        }
+        .scope-btn.active {
+            background: white; color: var(--hk-orange); font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
         .input-row { display: flex; flex-direction: column; gap: 10px; }
         .fields-container { display: flex; gap: 8px; width: 100%; align-items: flex-end; }
         .field-num, .field-date { flex: 1; min-width: 0; }
@@ -39,13 +49,11 @@
         input { 
             width: 100%; padding: 0; border: 1px solid #d1d1d6; border-radius: 8px; 
             font-size: 14px; background: #f9f9f9; height: 36px; line-height: 36px;
-            text-align: center; -webkit-appearance: none; appearance: none; min-height: 0;
+            text-align: center; -webkit-appearance: none; appearance: none;
         }
-        /* 讓 Placeholder 文字顏色稍微深一點，方便看清最新的利率 */
-        input::placeholder { color: #8e8e93; opacity: 0.8; }
+        input::placeholder { color: #8e8e93; }
 
-        .btn-row, .btn-row-single { display: flex; gap: 8px; width: 100%; }
-        .btn { flex: 1; border: none; border-radius: 8px; font-weight: bold; color: white; font-size: 14px; height: 38px; cursor: pointer; }
+        .btn { width: 100%; border: none; border-radius: 8px; font-weight: bold; color: white; font-size: 14px; height: 38px; cursor: pointer; }
         .btn-blue { background: var(--hk-blue); }
         .btn-red { background: var(--withdraw); }
         .btn-orange { background: var(--hk-orange); }
@@ -93,6 +101,11 @@
         </div>
 
         <div class="input-card" id="rateInputCard">
+            <div class="scope-selector">
+                <button class="scope-btn active" id="btnAllAcc" onclick="setScope('all')">所有帳戶</button>
+                <button class="scope-btn" id="btnOnlyCurrent" onclick="setScope('current')">僅此帳戶</button>
+            </div>
+
             <div id="rateNormalUI" class="input-row">
                 <div class="fields-container">
                     <div class="field-num"><label>📈 年利率 %</label><input type="number" id="rateVal" step="0.01" inputmode="decimal" placeholder="最新: 0.00"></div>
@@ -100,12 +113,13 @@
                 </div>
                 <div class="btn-row-single"><button class="btn btn-orange" onclick="handleRateUpdate()">更新利率</button></div>
             </div>
+            
             <div id="rateEditUI" class="input-row hidden">
                 <div class="fields-container">
                     <div class="field-num"><label>📈 修改 %</label><input type="number" id="editRateVal"></div>
                     <div class="field-date"><label>📅 修改日期</label><input type="date" id="editRateDate"></div>
                 </div>
-                <div class="btn-row">
+                <div style="display:flex; gap:8px;">
                     <button class="btn btn-success" onclick="confirmEdit('rate')">儲存</button>
                     <button class="btn btn-gray" onclick="cancelEdit()">取消</button>
                 </div>
@@ -118,19 +132,9 @@
                     <div class="field-num"><label>💰 金額</label><input type="number" id="transAmt" placeholder="0.00" inputmode="decimal"></div>
                     <div class="field-date"><label>📅 交易日期</label><input type="date" id="transDate"></div>
                 </div>
-                <div class="btn-row">
+                <div style="display:flex; gap:8px;">
                     <button class="btn btn-blue" onclick="addRecord('dep')">📥 存入</button>
                     <button class="btn btn-red" onclick="addRecord('with')">📤 提取</button>
-                </div>
-            </div>
-            <div id="moneyEditUI" class="input-row hidden">
-                <div class="fields-container">
-                    <div class="field-num"><label>💰 修改金額</label><input type="number" id="editTransAmt"></div>
-                    <div class="field-date"><label>📅 修改日期</label><input type="date" id="editTransDate"></div>
-                </div>
-                <div class="btn-row">
-                    <button class="btn btn-success" onclick="confirmEdit('money')">儲存</button>
-                    <button class="btn btn-gray" onclick="cancelEdit()">取消</button>
                 </div>
             </div>
         </div>
@@ -147,12 +151,19 @@
 <script>
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwjWG0VNOh5X-XigkCtX24GiaDxIvm9EgNVY8iQwg36mAr2TUVtArqq9pFSIReP3MQv/exec';
     let db = { current: "預設帳戶", accounts: { "預設帳戶": [] } };
+    let currentScope = 'all'; // 預設改為 'all'
     let pendingEditId = null;
 
     const todayStr = new Date().toLocaleDateString('sv-SE');
     ['transDate', 'rateDate', 'targetDate'].forEach(id => document.getElementById(id).value = todayStr);
 
     function fmt(num) { return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+
+    function setScope(scope) {
+        currentScope = scope;
+        document.getElementById('btnAllAcc').className = scope === 'all' ? 'scope-btn active' : 'scope-btn';
+        document.getElementById('btnOnlyCurrent').className = scope === 'current' ? 'scope-btn active' : 'scope-btn';
+    }
 
     async function pull() {
         try {
@@ -182,26 +193,20 @@
         if (n && !db.accounts[n]) { db.accounts[n] = []; db.current = n; push(); }
     }
 
-    // --- 核心邏輯：利率更新選擇 ---
     function handleRateUpdate() {
         const val = document.getElementById('rateVal').value;
         const date = document.getElementById('rateDate').value;
-        if (!val) return alert("請輸入新的利率數值");
+        if (!val) return alert("請輸入年利率");
 
-        const choice = confirm("更新利率：\n[確定] - 套用到「所有帳戶」\n[取消] - 僅套用到「目前帳戶」");
-        
-        if (choice) {
-            // 套用到所有帳戶
-            Object.keys(db.accounts).forEach(accName => {
-                db.accounts[accName].push({ id: Date.now() + Math.random(), type: 'rate', date, value: parseFloat(val) });
+        if (currentScope === 'all') {
+            Object.keys(db.accounts).forEach(acc => {
+                db.accounts[acc].push({ id: Date.now() + Math.random(), type: 'rate', date, value: parseFloat(val) });
             });
-            alert("已同步更新所有帳戶的利率");
+            alert("已同步更新所有帳戶的利率紀錄");
         } else {
-            // 僅限目前帳戶
             db.accounts[db.current].push({ id: Date.now(), type: 'rate', date, value: parseFloat(val) });
         }
-        
-        document.getElementById('rateVal').value = ''; // 清空輸入框
+        document.getElementById('rateVal').value = '';
         push();
     }
 
@@ -209,73 +214,51 @@
         let val = document.getElementById('transAmt').value;
         let date = document.getElementById('transDate').value;
         if (!val) return;
-        db.accounts[db.current].push({ id: Date.now(), type: (type==='dep'?'dep':'with'), date, value: parseFloat(val) });
+        db.accounts[db.current].push({ id: Date.now(), type, date, value: parseFloat(val) });
         document.getElementById('transAmt').value = '';
         push();
     }
 
     function startEdit(id, type, val, date) {
-        cancelEdit();
         pendingEditId = id;
         if (type === 'rate') {
             document.getElementById('editRateVal').value = val;
             document.getElementById('editRateDate').value = date;
             document.getElementById('rateNormalUI').classList.add('hidden');
             document.getElementById('rateEditUI').classList.remove('hidden');
-        } else {
-            document.getElementById('editTransAmt').value = Math.abs(val);
-            document.getElementById('editTransDate').value = date;
-            document.getElementById('moneyNormalUI').classList.add('hidden');
-            document.getElementById('moneyEditUI').classList.remove('hidden');
         }
-    }
-
-    function confirmEdit(mode) {
-        let val = (mode === 'rate') ? document.getElementById('editRateVal').value : document.getElementById('editTransAmt').value;
-        let date = (mode === 'rate') ? document.getElementById('editRateDate').value : document.getElementById('editTransDate').value;
-        const oldRec = db.accounts[db.current].find(x => x.id === pendingEditId);
-        db.accounts[db.current] = db.accounts[db.current].filter(x => x.id !== pendingEditId);
-        db.accounts[db.current].push({ id: Date.now(), type: oldRec.type, date: date, value: parseFloat(val) });
-        cancelEdit(); push();
     }
 
     function cancelEdit() {
         pendingEditId = null;
         document.getElementById('rateNormalUI').classList.remove('hidden');
         document.getElementById('rateEditUI').classList.add('hidden');
-        document.getElementById('moneyNormalUI').classList.remove('hidden');
-        document.getElementById('moneyEditUI').classList.add('hidden');
-        runCalculation();
+    }
+
+    function confirmEdit(mode) {
+        let val = document.getElementById('editRateVal').value;
+        let date = document.getElementById('editRateDate').value;
+        db.accounts[db.current] = db.accounts[db.current].filter(x => x.id !== pendingEditId);
+        db.accounts[db.current].push({ id: Date.now(), type: 'rate', date, value: parseFloat(val) });
+        cancelEdit(); push();
     }
 
     function delRecord(id) { if(confirm("確定刪除此紀錄？")) { db.accounts[db.current] = db.accounts[db.current].filter(x => x.id !== id); push(); } }
-
-    function handleReset() { if (confirm(`確定清空 [${db.current}] 紀錄？`)) { db.accounts[db.current] = []; push(); } }
+    function handleReset() { if (confirm(`清空 [${db.current}] 紀錄？`)) { db.accounts[db.current] = []; push(); } }
     function handleDelete() {
-        if (Object.keys(db.accounts).length <= 1) return alert("不能刪除最後一個帳戶");
-        if (confirm(`確定刪除 [${db.current}] 帳戶？`)) { delete db.accounts[db.current]; db.current = Object.keys(db.accounts)[0]; push(); }
+        if (Object.keys(db.accounts).length <= 1) return alert("最後一個帳戶不可刪除");
+        if (confirm(`刪除 [${db.current}] 帳戶？`)) { delete db.accounts[db.current]; db.current = Object.keys(db.accounts)[0]; push(); }
     }
 
     function runCalculation() {
         const history = db.accounts[db.current] || [];
         const sorted = [...history].sort((a,b) => new Date(a.date) - new Date(b.date));
-        
-        // --- 虛擬顯示最新利率 ---
-        const rateRecords = sorted.filter(x => x.type === 'rate');
-        if (rateRecords.length > 0) {
-            const latestRate = rateRecords[rateRecords.length - 1].value;
-            document.getElementById('rateVal').placeholder = "目前: " + latestRate + "%";
-        } else {
-            document.getElementById('rateVal').placeholder = "最新: 0.00";
-        }
+        const rates = sorted.filter(x => x.type === 'rate');
+        document.getElementById('rateVal').placeholder = rates.length ? `目前: ${rates[rates.length-1].value}%` : "最新: 0.00";
 
-        const inputDateStr = document.getElementById('targetDate').value;
-        const inputDate = new Date(inputDateStr); inputDate.setHours(0,0,0,0);
-        const today = new Date(); today.setHours(0,0,0,0);
+        const inputDate = new Date(document.getElementById('targetDate').value);
+        inputDate.setHours(0,0,0,0);
         
-        document.getElementById('mainCard').className = (inputDate > today) ? 'display-card is-predicting' : 'display-card';
-        document.getElementById('predictLabel').innerText = (inputDateStr === today.toLocaleDateString('sv-SE')) ? "📅 今日" : (inputDate > today ? "🔭 預測至" : "📅 結算至");
-
         let p = 0, r = 0, acc = 0, html = "";
         let iter = (sorted.length > 0) ? new Date(sorted[0].date) : new Date();
         iter.setHours(0,0,0,0);
@@ -286,39 +269,23 @@
         while (iter <= inputDate) {
             const dStr = iter.toLocaleDateString('sv-SE');
             sorted.filter(x => x.date === dStr).forEach(item => {
-                let sign = "", amtClass = "", name = "", labelClass = "log-type-label";
                 if (item.type === 'rate') { 
                     r = item.value / 100; 
-                    name = "📈 利率調整: " + item.value + "%";
-                    labelClass += " log-rate-highlight";
+                    html = `<div class="log-item"><div class="log-info"><span class="log-date">${item.date}</span><br><span class="log-type-label log-rate-highlight">📈 利率調整: ${item.value}%</span></div><span class="log-amt"></span><div class="action-group"><div onclick="startEdit(${item.id},'rate',${item.value},'${item.date}')">${editSvg}</div><div onclick="delRecord(${item.id})">${delSvg}</div></div></div>` + html;
                 } else {
-                    p += (item.type === 'dep' ? item.value : -item.value);
-                    name = item.type === 'dep' ? "📥 存入" : "📤 提款";
-                    sign = item.type === 'dep' ? "+" : "-";
-                    amtClass = item.type === 'dep' ? "amt-pos" : "amt-neg";
+                    const sign = item.type==='dep'?'+':'-';
+                    p += (item.type==='dep'?item.value:-item.value);
+                    html = `<div class="log-item"><div class="log-info"><span class="log-date">${item.date}</span><br><span class="log-type-label">${item.type==='dep'?'📥 存入':'📤 提款'}</span></div><span class="log-amt ${item.type==='dep'?'amt-pos':'amt-neg'}">${sign}${fmt(item.value)}</span><div class="action-group"><div onclick="delRecord(${item.id})">${delSvg}</div></div></div>` + html;
                 }
-                html = `<div class="log-item">
-                    <div class="log-info"><span class="log-date">${item.date}</span><br><span class="${labelClass}">${name}</span></div>
-                    <span class="log-amt ${amtClass}">${sign}${item.type==='rate' ? '' : fmt(item.value)}</span>
-                    <div class="action-group">
-                        <div onclick="startEdit(${item.id}, '${item.type}', ${item.value}, '${item.date}')">${editSvg}</div>
-                        <div onclick="delRecord(${item.id})">${delSvg}</div>
-                    </div>
-                </div>` + html;
             });
             if (iter.getDate() === 1 && acc > 0) {
                 p += acc;
-                html = `<div class="log-item" style="background:#f0faff">
-                    <div class="log-info"><span class="log-date">${dStr}</span><br><span class="log-type-label" style="color:var(--hk-blue);">🔄 利息存入</span></div>
-                    <span class="log-amt amt-pos" style="color:var(--predict);">+${fmt(acc)}</span>
-                    <div class="action-group"></div>
-                </div>` + html;
+                html = `<div class="log-item" style="background:#f0faff"><div class="log-info"><span class="log-date">${dStr}</span><br><span class="log-type-label" style="color:var(--hk-blue);">🔄 利息存入</span></div><span class="log-amt amt-pos" style="color:var(--predict);">+${fmt(acc)}</span><div class="action-group"></div></div>` + html;
                 acc = 0;
             }
             if (iter < inputDate && p > 0 && r > 0) acc += (p * r) / 365;
             iter.setDate(iter.getDate() + 1);
         }
-        
         document.getElementById('totalDisplay').innerText = `HK$ ${fmt(p+acc)}`;
         document.getElementById('breakdownDisplay').innerText = `本金: ${fmt(p)} | 利息: ${fmt(acc)}`;
         document.getElementById('logList').innerHTML = html || '<div style="padding:20px; text-align:center; color:#ccc;">尚無紀錄</div>';
