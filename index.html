@@ -41,6 +41,8 @@
             font-size: 14px; background: #f9f9f9; height: 36px; line-height: 36px;
             text-align: center; -webkit-appearance: none; appearance: none; min-height: 0;
         }
+        /* 讓 Placeholder 文字顏色稍微深一點，方便看清最新的利率 */
+        input::placeholder { color: #8e8e93; opacity: 0.8; }
 
         .btn-row, .btn-row-single { display: flex; gap: 8px; width: 100%; }
         .btn { flex: 1; border: none; border-radius: 8px; font-weight: bold; color: white; font-size: 14px; height: 38px; cursor: pointer; }
@@ -93,10 +95,10 @@
         <div class="input-card" id="rateInputCard">
             <div id="rateNormalUI" class="input-row">
                 <div class="fields-container">
-                    <div class="field-num"><label>📈 年利率 %</label><input type="number" id="rateVal" step="0.01" inputmode="decimal"></div>
+                    <div class="field-num"><label>📈 年利率 %</label><input type="number" id="rateVal" step="0.01" inputmode="decimal" placeholder="最新: 0.00"></div>
                     <div class="field-date"><label>📅 生效日期</label><input type="date" id="rateDate"></div>
                 </div>
-                <div class="btn-row-single"><button class="btn btn-orange" onclick="addRecord('rate')">更新利率</button></div>
+                <div class="btn-row-single"><button class="btn btn-orange" onclick="handleRateUpdate()">更新利率</button></div>
             </div>
             <div id="rateEditUI" class="input-row hidden">
                 <div class="fields-container">
@@ -180,19 +182,36 @@
         if (n && !db.accounts[n]) { db.accounts[n] = []; db.current = n; push(); }
     }
 
-    function handleReset() { if (confirm(`確定清空 [${db.current}] 紀錄？`)) { db.accounts[db.current] = []; push(); } }
-    function handleDelete() {
-        if (Object.keys(db.accounts).length <= 1) return alert("不能刪除最後一個帳戶");
-        if (confirm(`確定刪除 [${db.current}] 帳戶？`)) { delete db.accounts[db.current]; db.current = Object.keys(db.accounts)[0]; push(); }
+    // --- 核心邏輯：利率更新選擇 ---
+    function handleRateUpdate() {
+        const val = document.getElementById('rateVal').value;
+        const date = document.getElementById('rateDate').value;
+        if (!val) return alert("請輸入新的利率數值");
+
+        const choice = confirm("更新利率：\n[確定] - 套用到「所有帳戶」\n[取消] - 僅套用到「目前帳戶」");
+        
+        if (choice) {
+            // 套用到所有帳戶
+            Object.keys(db.accounts).forEach(accName => {
+                db.accounts[accName].push({ id: Date.now() + Math.random(), type: 'rate', date, value: parseFloat(val) });
+            });
+            alert("已同步更新所有帳戶的利率");
+        } else {
+            // 僅限目前帳戶
+            db.accounts[db.current].push({ id: Date.now(), type: 'rate', date, value: parseFloat(val) });
+        }
+        
+        document.getElementById('rateVal').value = ''; // 清空輸入框
+        push();
     }
 
     function addRecord(type) {
-        let val = (type === 'rate') ? document.getElementById('rateVal').value : document.getElementById('transAmt').value;
-        let date = (type === 'rate') ? document.getElementById('rateDate').value : document.getElementById('transDate').value;
+        let val = document.getElementById('transAmt').value;
+        let date = document.getElementById('transDate').value;
         if (!val) return;
-        db.accounts[db.current].push({ id: Date.now(), type: (type==='rate'?'rate':(type==='dep'?'dep':'with')), date, value: parseFloat(val) });
+        db.accounts[db.current].push({ id: Date.now(), type: (type==='dep'?'dep':'with'), date, value: parseFloat(val) });
+        document.getElementById('transAmt').value = '';
         push();
-        if(type!=='rate') document.getElementById('transAmt').value = '';
     }
 
     function startEdit(id, type, val, date) {
@@ -231,19 +250,24 @@
 
     function delRecord(id) { if(confirm("確定刪除此紀錄？")) { db.accounts[db.current] = db.accounts[db.current].filter(x => x.id !== id); push(); } }
 
+    function handleReset() { if (confirm(`確定清空 [${db.current}] 紀錄？`)) { db.accounts[db.current] = []; push(); } }
+    function handleDelete() {
+        if (Object.keys(db.accounts).length <= 1) return alert("不能刪除最後一個帳戶");
+        if (confirm(`確定刪除 [${db.current}] 帳戶？`)) { delete db.accounts[db.current]; db.current = Object.keys(db.accounts)[0]; push(); }
+    }
+
     function runCalculation() {
         const history = db.accounts[db.current] || [];
         const sorted = [...history].sort((a,b) => new Date(a.date) - new Date(b.date));
         
-        // --- 核心修正：抓取最新利率填入輸入框 ---
+        // --- 虛擬顯示最新利率 ---
         const rateRecords = sorted.filter(x => x.type === 'rate');
         if (rateRecords.length > 0) {
             const latestRate = rateRecords[rateRecords.length - 1].value;
-            document.getElementById('rateVal').value = latestRate;
+            document.getElementById('rateVal').placeholder = "目前: " + latestRate + "%";
         } else {
-            document.getElementById('rateVal').placeholder = "0.00";
+            document.getElementById('rateVal').placeholder = "最新: 0.00";
         }
-        // ------------------------------------
 
         const inputDateStr = document.getElementById('targetDate').value;
         const inputDate = new Date(inputDateStr); inputDate.setHours(0,0,0,0);
