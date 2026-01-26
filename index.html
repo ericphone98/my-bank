@@ -37,15 +37,15 @@
 
         .input-row { display: flex; gap: 10px; margin-bottom: 8px; align-items: flex-end; }
         
-        /* 修改點：數值與日期輸入框大小一致 */
-        .field-num, .field-date { flex: 1; min-width: 0; }
+        /* 已編輯：將數值輸入框比例縮小 (從 1 改為 0.7) */
+        .field-num { flex: 0.7; min-width: 0; }
+        .field-date { flex: 1; min-width: 0; }
         
         label { display: block; font-size: 9px; color: #8e8e93; margin-bottom: 3px; font-weight: bold; }
         input { width: 100%; padding: 0 8px; border: 1px solid #d1d1d6; border-radius: 8px; font-size: 14px; background: #f9f9f9; height: 36px; }
 
-        /* 按鈕區域 */
-        .btn-row { display: flex; gap: 6px; flex: 0 0 100px; } /* 存/提按鈕區 */
-        .btn-row-single { display: flex; flex: 0 0 50px; } /* 單個按鈕區（更新） */
+        .btn-row { display: flex; gap: 6px; flex: 0 0 100px; } 
+        .btn-row-single { display: flex; flex: 0 0 50px; } 
         
         .btn { width: 100%; border: none; border-radius: 8px; font-weight: bold; color: white; font-size: 12px; height: 36px; cursor: pointer; padding: 0 4px; }
         .btn-blue { background: var(--hk-blue); }
