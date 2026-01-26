@@ -2,130 +2,126 @@
 <html lang="zh-HK">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>活期存摺</title>
     <style>
-        :root { --hk-blue: #007aff; --hk-orange: #ff9500; --bg: #f2f2f7; --card-bg: #ffffff; --predict: #5856d6; --withdraw: #ff453a; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        html, body { height: 100dvh; margin: 0; overflow: hidden; background: var(--bg); font-family: -apple-system, sans-serif; }
-        body { display: flex; flex-direction: column; padding: env(safe-area-inset-top) 0 0 0; }
-
-        .top-panel { flex-shrink: 0; background: var(--bg); padding: 5px 12px 0 12px; z-index: 10; }
-        .account-tabs { display: flex; gap: 6px; overflow-x: auto; padding: 5px 0; scrollbar-width: none; }
-        .tab { padding: 4px 10px; background: #e5e5ea; border-radius: 8px; font-size: 11px; white-space: nowrap; border: none; }
-        .tab.active { background: var(--hk-blue); color: white; font-weight: bold; }
-
-        .display-card { background: var(--hk-blue); color: white; padding: 12px 15px 18px 15px; border-radius: 18px; text-align: left; margin-bottom: 8px; position: relative; }
-        .display-card.is-predicting { background: var(--predict); }
-        .card-header { display: flex; justify-content: space-between; align-items: flex-start; }
-        .amount { font-size: 32px; font-weight: bold; margin: 0; display: block; }
-        .breakdown { font-size: 11px; opacity: 0.85; margin-top: 4px; }
-        
-        .predict-box { text-align: right; }
-        .predict-box label { color: rgba(255,255,255,0.7); font-size: 9px; display: block; }
-        .predict-box input { background: rgba(255,255,255,0.2); border: none; color: white; font-size: 10px; padding: 0 5px; border-radius: 6px; width: 105px; height: 24px; line-height: 24px; outline: none; }
-
-        .input-card { background: var(--card-bg); padding: 10px; border-radius: 14px; margin-bottom: 6px; }
-        .input-row { display: flex; gap: 10px; margin-bottom: 8px; align-items: flex-end; }
-        .field-main { flex: 2; } /* 加大存款寬度 */
-        .field-date { flex: 1.3; } /* 加大日期闊度 */
-        
-        label { display: block; font-size: 9px; color: #8e8e93; margin-bottom: 3px; font-weight: bold; }
-        input { width: 100%; padding: 0 8px; border: 1px solid #d1d1d6; border-radius: 8px; font-size: 14px; background: #f9f9f9; height: 36px; line-height: 36px; -webkit-appearance: none; display: block; }
-
-        /* 利率切換開關 (互調後：同步在前，個別在後) */
-        .toggle-row { display: flex; gap: 5px; margin-bottom: 8px; background: #eee; padding: 3px; border-radius: 8px; }
-        .toggle-btn { flex: 1; border: none; background: none; font-size: 10px; padding: 4px; border-radius: 6px; color: #888; }
-        .toggle-btn.active { background: white; color: var(--hk-orange); font-weight: bold; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        
-        .btn-row { display: flex; gap: 6px; }
-        .btn { flex: 1; padding: 0; border: none; border-radius: 8px; font-weight: bold; color: white; font-size: 13px; height: 36px; line-height: 36px; }
+        :root { --hk-blue: #007aff; --hk-orange: #ff9500; --bg: #f2f2f7; --card-bg: #ffffff; --predict: #5856d6; --withdraw: #ff453a; --predict-bg: #f5f3ff; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 12px; padding-bottom: 60px; }
+        .container { max-width: 420px; margin: auto; }
+        .account-tabs { display: flex; gap: 8px; overflow-x: auto; padding: 5px 0 15px 0; scrollbar-width: none; }
+        .account-tabs::-webkit-scrollbar { display: none; }
+        .tab { padding: 10px 18px; background: #e5e5ea; border-radius: 12px; font-size: 14px; white-space: nowrap; cursor: pointer; color: #3a3a3c; border: none; transition: 0.2s; }
+        .tab.active { background: var(--hk-blue); color: white; font-weight: bold; box-shadow: 0 4px 10px rgba(0,122,255,0.3); }
+        .add-tab { background: #fff; color: var(--hk-blue); border: 1px dashed var(--hk-blue); }
+        .display-card { background: var(--hk-blue); color: white; padding: 25px 20px; border-radius: 20px; text-align: center; margin-bottom: 15px; box-shadow: 0 8px 16px rgba(0,122,255,0.15); transition: 0.5s ease; }
+        .display-card.is-predicting { background: var(--predict); box-shadow: 0 8px 16px rgba(88, 86, 214, 0.3); }
+        .amount { font-size: 34px; font-weight: bold; margin: 8px 0; display: block; }
+        .breakdown { font-size: 13px; opacity: 0.9; background: rgba(0,0,0,0.15); padding: 6px 12px; border-radius: 20px; display: inline-block; margin-top: 5px; }
+        .input-card { background: var(--card-bg); padding: 18px; border-radius: 18px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .editing-mode { border: 2px solid var(--hk-orange) !important; background: #fffdf5; }
+        label { display: block; font-size: 11px; color: #8e8e93; margin-bottom: 4px; font-weight: bold; }
+        input { width: 100%; padding: 12px; border: 1px solid #d1d1d6; border-radius: 10px; font-size: 16px; box-sizing: border-box; background: #f9f9f9; }
+        .btn-row { display: flex; gap: 10px; }
+        .btn { flex: 1; padding: 14px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; color: white; font-size: 15px; }
         .btn-blue { background: var(--hk-blue); }
         .btn-red { background: var(--withdraw); }
         .btn-orange { background: var(--hk-orange); }
-
-        .log-section { flex: 1; background: white; border-radius: 20px 20px 0 0; display: flex; flex-direction: column; overflow: hidden; }
-        #logList { overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; padding-bottom: 100px; }
-        .log-item { display: flex; justify-content: space-between; padding: 12px 15px; border-bottom: 1px solid #f2f2f7; align-items: center; }
-        .log-info { flex: 1; }
-        .log-date { font-size: 10px; color: #8e8e93; }
-        .log-amt { font-family: 'SF Mono', monospace; font-weight: 600; font-size: 14px; text-align: right; }
+        .btn-gray { background: #8e8e93; }
+        .log-item { display: flex; justify-content: space-between; padding: 14px; border-bottom: 1px solid #f2f2f7; background: white; align-items: center; }
+        .log-item.predict-row { background: var(--predict-bg); }
+        .log-info { display: flex; flex-direction: column; flex-grow: 1; }
+        .log-date { font-size: 11px; color: #8e8e93; }
+        .log-amt { font-weight: 600; font-size: 15px; margin-right: 10px; }
         .amt-pos { color: #34c759; }
         .amt-neg { color: var(--withdraw); }
         .amt-int { color: var(--predict); }
-        
-        /* 編輯按鈕樣式 */
-        .edit-btn { background: #f2f2f7; color: var(--hk-blue); border: none; font-size: 10px; padding: 4px 8px; border-radius: 5px; margin-right: 8px; font-weight: bold; }
-        .action-btns { display: flex; align-items: center; }
-        .del-btn { border: none; background: none; font-size: 13px; opacity: 0.2; }
+        .predict-tag { font-size: 10px; background: var(--predict); color: white; padding: 1px 5px; border-radius: 4px; margin-left: 5px; vertical-align: middle; }
+        .action-btns button { border: none; background: none; font-size: 16px; cursor: pointer; padding: 5px; }
+        #syncStatus { text-align:center; font-size:11px; color:#8e8e93; margin-bottom:8px; font-weight: bold; }
     </style>
 </head>
 <body>
+<div class="container">
+    <div id="syncStatus">● 載入中...</div>
+    <div class="account-tabs" id="accountTabs"></div>
 
-    <div class="top-panel">
-        <div id="syncStatus" style="font-size:9px; text-align:center; color:#8e8e93; margin-bottom:2px;">同步中...</div>
-        <div class="account-tabs" id="accountTabs"></div>
+    <div class="display-card" id="mainCard">
+        <small id="accountTitle">帳戶</small> <span id="modeTag"></span>
+        <span class="amount" id="totalDisplay">HK$ 0.00</span>
+        <div class="breakdown" id="breakdownDisplay">本金: 0.00 | 未結利息: 0.00</div>
+    </div>
 
-        <div class="display-card" id="mainCard">
-            <div class="card-header">
-                <small id="accountTitle" style="font-weight: bold;">帳戶</small>
-                <div class="predict-box">
-                    <label id="predictLabel">📅 今日</label>
-                    <input type="date" id="targetDate" onchange="runCalculation()">
+    <div class="input-card" style="border: 2px solid var(--predict);">
+        <label>🔭 結算/預測日期 (今天及以前不顯示預測標籤)</label>
+        <input type="date" id="targetDate" onchange="runCalculation()">
+    </div>
+
+    <div class="input-card" id="moneyCard" style="border-top: 4px solid var(--hk-blue);">
+        <div class="btn-row">
+            <div style="flex: 1.2;"><label>💰 金額</label><input type="number" id="transAmt" step="0.01" placeholder="0.00" inputmode="decimal"></div>
+            <div style="flex: 0.8;"><label>📅 日期</label><input type="date" id="transDate"></div>
+        </div>
+        <div class="btn-row" id="normalMoneyBtns" style="margin-top:12px;">
+            <button class="btn btn-blue" onclick="addRecord('dep')">📥 存入</button>
+            <button class="btn btn-red" onclick="addRecord('with')">📤 提款</button>
+        </div>
+        <div class="btn-row" id="editMoneyBtns" style="margin-top:12px; display:none;">
+            <button class="btn btn-orange" onclick="saveEdit('money')">✅ 儲存修改</button>
+            <button class="btn btn-gray" onclick="cancelEdit()">取消</button>
+        </div>
+    </div>
+
+    <div class="input-card" id="rateCard" style="border-left: 5px solid var(--hk-orange);">
+        <div class="btn-row">
+            <div style="flex: 1;"><label>📈 年利率 %</label><input type="number" id="rateVal" step="0.01" placeholder="0.00" inputmode="decimal"></div>
+            <div style="flex: 1;"><label>📅 生效日期</label><input type="date" id="rateDate"></div>
+        </div>
+        <div id="rateActions" style="margin-top:12px;">
+            <div id="normalRateBtns">
+                <button class="btn btn-orange" id="rateSubmitBtn" style="width:100%;" onclick="addRecord('rate')">🚀 更新利率</button>
+                <div id="rateSyncOption" style="margin-top: 8px; text-align: center;">
+                    <input type="checkbox" id="applyAll" style="width: auto; vertical-align: middle;"> 
+                    <label style="display: inline; color: #444; font-size: 12px;"> 同步至所有帳戶</label>
                 </div>
             </div>
-            <span class="amount" id="totalDisplay">HK$ 0.00</span>
-            <div class="breakdown" id="breakdownDisplay">本金: 0.00 | 利息: 0.00</div>
-        </div>
-
-        <div class="input-card" style="border-top: 2px solid var(--hk-blue);">
-            <div class="input-row">
-                <div class="field-main"><label>💰 存款/提款金額</label><input type="number" id="transAmt" placeholder="0.00" inputmode="decimal"></div>
-                <div class="field-date"><label>📅 交易日期</label><input type="date" id="transDate"></div>
+            <div id="editRateBtns" style="display:none; gap:10px;" class="btn-row">
+                <button class="btn btn-orange" onclick="saveEdit('rate')">✅ 儲存修改</button>
+                <button class="btn btn-gray" onclick="cancelEdit()">取消</button>
             </div>
-            <div class="btn-row">
-                <button class="btn btn-blue" onclick="addRecord('dep')">存入</button>
-                <button class="btn btn-red" onclick="addRecord('with')">提款</button>
-            </div>
-        </div>
-
-        <div class="input-card" style="border-left: 4px solid var(--hk-orange);">
-            <div class="toggle-row">
-                <button class="toggle-btn active" id="btnAll" onclick="setRateMode('all')">所有帳戶同步</button>
-                <button class="toggle-btn" id="btnInd" onclick="setRateMode('ind')">個別帳戶</button>
-            </div>
-            <div class="input-row">
-                <div class="field-main"><label>📈 年利率 %</label><input type="number" id="rateVal" placeholder="0.00" inputmode="decimal"></div>
-                <div class="field-date"><label>📅 生效日期</label><input type="date" id="rateDate"></div>
-            </div>
-            <button class="btn btn-orange" style="width:100%;" onclick="addRecord('rate')">更新利率</button>
         </div>
     </div>
 
-    <div class="log-section">
-        <div id="logList"></div>
+    <div id="logList" style="border-radius: 15px; overflow: hidden; background:white; box-shadow: 0 2px 10px rgba(0,0,0,0.05);"></div>
+    
+    <div style="display: flex; gap: 10px; margin-top: 30px; justify-content: center;">
+        <button style="color:#c7c7cc; background:none; border:none; font-size:12px;" onclick="deleteAcc()">🗑️ 刪除此帳戶</button>
+        <button style="color:#c7c7cc; background:none; border:none; font-size:12px;" onclick="clearAll()">⚠️ 重設全站資料</button>
     </div>
+</div>
 
 <script>
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwjWG0VNOh5X-XigkCtX24GiaDxIvm9EgNVY8iQwg36mAr2TUVtArqq9pFSIReP3MQv/exec';
     let db = { current: "預設帳戶", accounts: { "預設帳戶": [] } };
-    let rateMode = 'all'; // 預設改為同步
+    let editingId = null;
 
-    const todayStr = new Date().toLocaleDateString('sv-SE');
-    ['transDate', 'rateDate', 'targetDate'].forEach(id => document.getElementById(id).value = todayStr);
-
-    function setRateMode(m) {
-        rateMode = m;
-        document.getElementById('btnInd').className = m==='ind' ? 'toggle-btn active' : 'toggle-btn';
-        document.getElementById('btnAll').className = m==='all' ? 'toggle-btn active' : 'toggle-btn';
+    // 校準「今天」的時間戳，確保比較時不計時分秒
+    function getTodayDate() {
+        const d = new Date();
+        d.setHours(0, 0, 0, 0);
+        return d;
     }
+    const todayDate = getTodayDate();
+    const todayStr = new Date().toLocaleDateString('sv-SE');
+
+    ['transDate', 'rateDate', 'targetDate'].forEach(id => document.getElementById(id).value = todayStr);
 
     async function pull() {
         try {
             const r = await fetch(`${SCRIPT_URL}?action=read`);
             const data = await r.json();
             if (data && data.accounts) db = data;
-            renderTabs(); runCalculation();
+            renderTabs();
+            runCalculation();
             document.getElementById('syncStatus').innerText = "● 雲端已同步";
         } catch (e) { document.getElementById('syncStatus').innerText = "× 同步失敗"; }
     }
@@ -133,14 +129,16 @@
     async function push() {
         document.getElementById('syncStatus').innerText = "📤 儲存中...";
         await fetch(`${SCRIPT_URL}?action=write&data=${encodeURIComponent(JSON.stringify(db))}`, { mode: 'no-cors' });
-        runCalculation(); setTimeout(pull, 1000);
+        runCalculation();
+        setTimeout(pull, 1000);
     }
 
     function renderTabs() {
         const tabs = document.getElementById('accountTabs');
         tabs.innerHTML = Object.keys(db.accounts).map(n => 
             `<button class="tab ${n===db.current?'active':''}" onclick="db.current='${n}';renderTabs();runCalculation();">${n}</button>`
-        ).join('') + `<button class="tab" onclick="addAcc()">+</button>`;
+        ).join('') + `<button class="tab add-tab" onclick="addAcc()">+ 新增</button>`;
+        document.getElementById('accountTitle').innerText = db.current;
     }
 
     function addAcc() {
@@ -151,86 +149,114 @@
     function addRecord(type) {
         let val = (type === 'rate') ? document.getElementById('rateVal').value : document.getElementById('transAmt').value;
         let date = (type === 'rate') ? document.getElementById('rateDate').value : document.getElementById('transDate').value;
-        if (!val) return;
+        if (!val || isNaN(val)) return alert("請輸入有效數值");
         const record = { id: Date.now(), type, date, value: parseFloat(val) };
-        
-        if (type === 'rate' && rateMode === 'all') {
-            Object.keys(db.accounts).forEach((acc, i) => db.accounts[acc].push({...record, id: Date.now() + i}));
-        } else {
-            db.accounts[db.current].push(record);
-        }
-        push();
+        if (type === 'rate' && document.getElementById('applyAll').checked) {
+            Object.keys(db.accounts).forEach(acc => db.accounts[acc].push({...record, id: Date.now() + Math.random()}));
+        } else { db.accounts[db.current].push(record); }
+        clearInputs(); push();
     }
 
-    // 直接編輯功能
-    function startEdit(id, type, val, date) {
-        if (type === 'rate') {
-            document.getElementById('rateVal').value = val;
-            document.getElementById('rateDate').value = date;
-            document.getElementById('rateVal').focus();
+    function startEdit(id) {
+        cancelEdit();
+        const record = db.accounts[db.current].find(r => r.id === id);
+        if (!record) return;
+        editingId = id;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        if (record.type === 'rate') {
+            document.getElementById('rateCard').classList.add('editing-mode');
+            document.getElementById('rateVal').value = record.value;
+            document.getElementById('rateDate').value = record.date;
+            document.getElementById('normalRateBtns').style.display = 'none';
+            document.getElementById('editRateBtns').style.display = 'flex';
         } else {
-            document.getElementById('transAmt').value = Math.abs(val);
-            document.getElementById('transDate').value = date;
-            document.getElementById('transAmt').focus();
+            document.getElementById('moneyCard').classList.add('editing-mode');
+            document.getElementById('transAmt').value = record.value;
+            document.getElementById('transDate').value = record.date;
+            document.getElementById('normalMoneyBtns').style.display = 'none';
+            document.getElementById('editMoneyBtns').style.display = 'flex';
         }
-        // 自動移除舊紀錄，實現「覆蓋式編輯」
-        db.accounts[db.current] = db.accounts[db.current].filter(x => x.id !== id);
-        // 不立即 Push，等用戶按下存入/更新按鈕才 Push
-        runCalculation();
     }
 
-    function delRecord(id) { if(confirm("刪除此紀錄？")) { db.accounts[db.current] = db.accounts[db.current].filter(x => x.id !== id); push(); } }
+    function saveEdit(mode) {
+        const list = db.accounts[db.current];
+        const idx = list.findIndex(r => r.id === editingId);
+        if (idx === -1) return;
+        list[idx].value = parseFloat(mode === 'money' ? document.getElementById('transAmt').value : document.getElementById('rateVal').value);
+        list[idx].date = mode === 'money' ? document.getElementById('transDate').value : document.getElementById('rateDate').value;
+        cancelEdit(); push();
+    }
+
+    function cancelEdit() {
+        editingId = null;
+        document.querySelectorAll('.input-card').forEach(c => c.classList.remove('editing-mode'));
+        document.getElementById('normalMoneyBtns').style.display = 'flex';
+        document.getElementById('editMoneyBtns').style.display = 'none';
+        document.getElementById('normalRateBtns').style.display = 'block';
+        document.getElementById('editRateBtns').style.display = 'none';
+        clearInputs();
+    }
+
+    function clearInputs() { document.getElementById('transAmt').value = ''; document.getElementById('rateVal').value = ''; }
+
+    function delRecord(id) { if(confirm("確定刪除？")) { db.accounts[db.current] = db.accounts[db.current].filter(r => r.id !== id); push(); } }
 
     function runCalculation() {
         const history = db.accounts[db.current] || [];
         const sorted = [...history].sort((a,b) => new Date(a.date) - new Date(b.date));
-        
         const targetInput = document.getElementById('targetDate').value;
-        const targetDate = new Date(targetInput);
-        const today = new Date(); today.setHours(0,0,0,0);
         
-        // 修復：只有日期晚於今天才顯示預測至
-        const isPredicting = targetDate > today;
-        document.getElementById('mainCard').className = isPredicting ? 'display-card is-predicting' : 'display-card';
-        document.getElementById('predictLabel').innerText = isPredicting ? "🔭 預測至" : "📅 結算至";
+        // 重要：將目標日期設為 0 點比較
+        const interestEndDate = new Date(targetInput);
+        interestEndDate.setHours(0,0,0,0);
+        
+        // 只有大於今天才算預測模式
+        const isPredictingMode = interestEndDate > todayDate;
+        
+        const mainCard = document.getElementById('mainCard');
+        if (isPredictingMode) {
+            mainCard.classList.add('is-predicting');
+            document.getElementById('modeTag').innerHTML = '<span class="predict-tag">🔭 預測中</span>';
+        } else {
+            mainCard.classList.remove('is-predicting');
+            document.getElementById('modeTag').innerText = '';
+        }
 
         let p = 0, r = 0, acc = 0, html = "";
         if (sorted.length === 0) { updateUI(0,0); document.getElementById('logList').innerHTML = ""; return; }
 
         let iter = new Date(sorted[0].date); iter.setHours(0,0,0,0);
-        while (iter <= targetDate) {
-            const dStr = iter.toLocaleDateString('sv-SE');
-            sorted.filter(x => x.date === dStr).forEach(item => {
-                let sign = "", amtClass = "", name = "";
-                if (item.type === 'rate') {
+        const renderLimit = new Date(targetInput); renderLimit.setHours(23,59,59);
+
+        while (iter <= renderLimit) {
+            const currentIterStr = iter.toLocaleDateString('sv-SE');
+            const isIterFuture = iter > todayDate;
+
+            sorted.filter(item => item.date === currentIterStr).forEach(item => {
+                let row = "", v = item.value.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+                if (item.type === 'rate') { 
                     r = item.value / 100;
-                    name = "📈 利率: " + item.value + "%";
+                    row = `<div class="log-info"><span class="log-date">${item.date}${isIterFuture?' <span class="predict-tag">預估</span>':''}</span><span>📈 利率: ${item.value}%</span></div>`;
                 } else {
                     p += (item.type === 'dep' ? item.value : -item.value);
-                    name = item.type === 'dep' ? "📥 存入" : "📤 提款";
-                    sign = item.type === 'dep' ? "+" : "-";
-                    amtClass = item.type === 'dep' ? "amt-pos" : "amt-neg";
+                    row = `<div class="log-info"><span class="log-date">${item.date}${isIterFuture?' <span class="predict-tag">預估</span>':''}</span><span>${item.type==='dep'?'📥 存入':'📤 提款'}</span></div>
+                           <span class="log-amt ${item.type==='dep'?'amt-pos':'amt-neg'}">${item.type==='dep'?'+':'-'}${v}</span>`;
                 }
-                
-                html = `<div class="log-item">
-                    <div class="log-info">
-                        <span class="log-date">${item.date}</span><br>
-                        <span style="font-size:12px; font-weight:500;">${name}</span>
-                    </div>
-                    <div class="action-btns">
-                        <button class="edit-btn" onclick="startEdit(${item.id}, '${item.type}', ${item.value}, '${item.date}')">編輯</button>
-                        <span class="log-amt ${amtClass}">${sign}${item.type==='rate' ? '' : item.value.toLocaleString(undefined,{minimumFractionDigits:2})}</span>
-                        <button class="del-btn" onclick="delRecord(${item.id})">🗑️</button>
-                    </div>
-                </div>` + html;
+                html = `<div class="log-item ${isIterFuture?'predict-row':''}">${row}<div class="action-btns"><button onclick="startEdit(${item.id})">✏️</button><button onclick="delRecord(${item.id})">🗑️</button></div></div>` + html;
             });
 
             if (iter.getDate() === 1 && acc > 0) {
                 p += acc;
-                html = `<div class="log-item" style="background:#f0faff"><div class="log-info"><span class="log-date">${dStr}</span><br><span style="font-weight:bold;color:var(--hk-blue);font-size:12px">🔄 利息存入</span></div><span class="log-amt amt-int" style="margin-right:25px">+${acc.toFixed(2)}</span></div>` + html;
+                html = `<div class="log-item ${isIterFuture?'predict-row':''}" style="background:${isIterFuture?'#f5f3ff':'#f0faff'}">
+                    <div class="log-info"><span class="log-date">${currentIterStr}${isIterFuture?' <span class="predict-tag">預估</span>':''}</span><span style="font-weight:bold;color:${isIterFuture?'var(--predict)':'var(--hk-blue)'}">🔄 利息存入</span></div>
+                    <span class="log-amt amt-int">+${acc.toFixed(2)}</span><div style="width:68px"></div>
+                </div>` + html;
                 acc = 0;
             }
-            if (iter < targetDate && p > 0 && r > 0) acc += (p * r) / 365;
+
+            if (iter.getTime() < interestEndDate.getTime() && p > 0 && r > 0) {
+                acc += (p * r) / 365;
+            }
             iter.setDate(iter.getDate() + 1);
         }
         updateUI(p, acc);
@@ -238,9 +264,17 @@
     }
 
     function updateUI(p, acc) {
-        document.getElementById('totalDisplay').innerText = `HK$ ${(p+acc).toLocaleString(undefined,{minimumFractionDigits:2})}`;
-        document.getElementById('breakdownDisplay').innerText = `本金: ${p.toLocaleString()} | 利息: ${acc.toFixed(2)}`;
+        document.getElementById('totalDisplay').innerText = `HK$ ${(p+acc).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+        document.getElementById('breakdownDisplay').innerText = `本金: ${p.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})} | 未結利息: ${acc.toFixed(2)}`;
     }
+
+    function deleteAcc() {
+        if (Object.keys(db.accounts).length <= 1) return alert("不能刪除唯一帳戶");
+        if (confirm(`刪除「${db.current}」？`)) { delete db.accounts[db.current]; db.current = Object.keys(db.accounts)[0]; push(); }
+    }
+
+    function clearAll() { if(confirm("確定重設？")) { db = {current:"預設帳戶", accounts:{"預設帳戶":[]}}; push(); } }
+
     pull();
 </script>
 </body>
