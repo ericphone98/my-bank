@@ -23,7 +23,7 @@
         
         .predict-box { text-align: right; }
         .predict-box label { color: rgba(255,255,255,0.7); font-size: 9px; display: block; margin-bottom: 2px; }
-        .predict-box input { background: rgba(255,255,255,0.2); border: none; color: white; font-size: 10px; padding: 0 5px; border-radius: 6px; width: 105px !important; height: 24px; outline: none; }
+        .predict-box input { background: rgba(255,255,255,0.2); border: none; color: white; font-size: 10px; padding: 0 5px; border-radius: 6px; width: 105px !important; height: 24px; outline: none; text-align: center; }
 
         .input-card { 
             background: var(--card-bg); 
@@ -31,22 +31,35 @@
             border-radius: 12px; 
             margin-bottom: 6px; 
             border-left: 3px solid transparent;
+            width: 100%;
         }
         #rateInputCard { border-left-color: var(--hk-orange); }
         #moneyInputCard { border-left-color: var(--hk-blue); }
 
-        /* 修正：確保 row 寬度正確且不會溢出 */
+        /* 修正：強制垂直佈局且寬度限制 */
         .input-row { display: flex; flex-direction: column; gap: 10px; width: 100%; }
-        .fields-container { display: flex; gap: 8px; width: 100%; }
+        .fields-container { display: flex; gap: 8px; width: 100%; align-items: flex-end; }
         
-        /* 比例調整：金額/利率 佔 40%，日期 佔 60% */
-        .field-num { flex: 4; min-width: 0; }
-        .field-date { flex: 6; min-width: 0; }
+        /* 數值架縮小，日期佔大份 */
+        .field-num { flex: 3.5; min-width: 0; }
+        .field-date { flex: 6.5; min-width: 0; }
         
         label { display: block; font-size: 9px; color: #8e8e93; margin-bottom: 3px; font-weight: bold; }
         
-        /* 修正：移除寬度設定衝突，確保盒模型正確 */
-        input { width: 100%; padding: 0 8px; border: 1px solid #d1d1d6; border-radius: 8px; font-size: 14px; background: #f9f9f9; height: 36px; display: block; }
+        /* 核心修正：強制輸入框不超出範圍並文字居中 */
+        input { 
+            width: 100%; 
+            max-width: 100%;
+            padding: 0 4px; 
+            border: 1px solid #d1d1d6; 
+            border-radius: 8px; 
+            font-size: 14px; 
+            background: #f9f9f9; 
+            height: 36px; 
+            display: block; 
+            text-align: center; /* 讓輸入文字志鍾 */
+            -webkit-appearance: none;
+        }
 
         .btn-row, .btn-row-single { display: flex; gap: 8px; width: 100%; }
         
