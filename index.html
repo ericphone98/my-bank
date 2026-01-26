@@ -10,13 +10,11 @@
         html, body { height: 100dvh; margin: 0; overflow: hidden; background: var(--bg); font-family: -apple-system, sans-serif; }
         body { display: flex; flex-direction: column; padding: env(safe-area-inset-top) 0 0 0; }
 
-        /* 頂部控制區 */
         .top-panel { flex-shrink: 0; background: var(--bg); padding: 5px 12px 0 12px; z-index: 10; }
         .account-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; }
         .tab { padding: 4px 10px; background: #e5e5ea; border-radius: 8px; font-size: 11px; white-space: nowrap; border: none; }
         .tab.active { background: var(--hk-blue); color: white; font-weight: bold; }
 
-        /* 顯示卡片 */
         .display-card { background: var(--hk-blue); color: white; padding: 12px 15px; border-radius: 18px; margin-bottom: 8px; }
         .display-card.is-predicting { background: var(--predict); }
         .amount { font-size: 32px; font-weight: bold; margin: 0; font-variant-numeric: tabular-nums; }
@@ -26,7 +24,6 @@
         .predict-box label { color: rgba(255,255,255,0.7); font-size: 9px; display: block; }
         .predict-box input { background: rgba(255,255,255,0.2); border: none; color: white; font-size: 10px; padding: 0 5px; border-radius: 6px; width: 100px !important; height: 22px; text-align: center; outline: none; }
 
-        /* 輸入區卡片 */
         .input-card { background: var(--card-bg); padding: 12px; border-radius: 12px; margin-bottom: 6px; border-left: 3px solid transparent; }
         #rateInputCard { border-left-color: var(--hk-orange); }
         #moneyInputCard { border-left-color: var(--hk-blue); }
@@ -34,36 +31,27 @@
         .input-row { display: flex; flex-direction: column; gap: 10px; }
         .fields-container { display: flex; gap: 8px; width: 100%; align-items: flex-end; }
         
-        /* 比例重新分配：數字格加寬(5.0)，日期格縮小(5.0) */
-        .field-num { flex: 5.0; min-width: 0; }
-        .field-date { flex: 5.0; min-width: 0; }
+        /* 50% : 50% 比例 */
+        .field-num { flex: 1; min-width: 0; }
+        .field-date { flex: 1; min-width: 0; }
         
         label { display: block; font-size: 9px; color: #8e8e93; margin-bottom: 3px; font-weight: bold; }
         
-        /* 核心修復：input 的垂直與水平置中 */
         input { 
             width: 100%; 
-            padding: 0; /* 清除所有 Padding 以利置中 */
+            padding: 0;
             border: 1px solid #d1d1d6; 
             border-radius: 8px; 
             font-size: 14px; 
             background: #f9f9f9; 
-            height: 34px;      /* 固定高度 */
-            line-height: 34px; /* 與高度一致確保垂直置中 */
-            text-align: center; /* 水平置中 */
+            height: 36px;
+            line-height: 36px;
+            text-align: center;
             -webkit-appearance: none;
             appearance: none;
-            min-height: 0;     /* 覆蓋 iOS 預設最小高度 */
+            min-height: 0;
         }
 
-        /* 專門針對 iOS 日期控制項的內部置中 */
-        input[type="date"] {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* 按鈕樣式 */
         .btn-row, .btn-row-single { display: flex; gap: 8px; width: 100%; }
         .btn { flex: 1; border: none; border-radius: 8px; font-weight: bold; color: white; font-size: 14px; height: 38px; cursor: pointer; }
         .btn-blue { background: var(--hk-blue); }
@@ -72,13 +60,16 @@
         .btn-success { background: var(--success); }
         .btn-gray { background: #8e8e93; }
 
-        /* 紀錄列表 */
         .log-section { flex: 1; background: white; border-radius: 20px 20px 0 0; display: flex; flex-direction: column; overflow: hidden; border-top: 1px solid #e5e5ea; position: relative; }
         #logList { overflow-y: auto; flex: 1; padding-bottom: 60px; }
         .log-item { display: flex; justify-content: space-between; padding: 12px 15px; border-bottom: 1px solid #f2f2f7; align-items: center; }
         .log-info { flex: 1; }
         .log-date { font-size: 10px; color: #8e8e93; }
         .log-type-label { font-size: 12px; font-weight: 500; }
+        
+        /* 利率紀錄只改顏色，不加粗 */
+        .log-rate-highlight { color: var(--hk-orange); }
+        
         .log-amt { font-variant-numeric: tabular-nums; font-weight: 600; font-size: 13px; text-align: right; min-width: 90px; }
         .action-group { display: flex; gap: 12px; margin-left: 8px; }
         .icon-svg { width: 16px; height: 16px; fill: #b0b0b7; }
@@ -166,7 +157,6 @@
     </div>
 
 <script>
-    // JS 邏輯保持不變...
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwjWG0VNOh5X-XigkCtX24GiaDxIvm9EgNVY8iQwg36mAr2TUVtArqq9pFSIReP3MQv/exec';
     let db = { current: "預設帳戶", accounts: { "預設帳戶": [] } };
     let pendingEditId = null;
@@ -275,9 +265,11 @@
         while (iter <= inputDate) {
             const dStr = iter.toLocaleDateString('sv-SE');
             sorted.filter(x => x.date === dStr).forEach(item => {
-                let sign = "", amtClass = "", name = "";
+                let sign = "", amtClass = "", name = "", labelClass = "log-type-label";
                 if (item.type === 'rate') { 
-                    r = item.value / 100; name = "📈 利率: " + item.value + "%";
+                    r = item.value / 100; 
+                    name = "📈 利率調整: " + item.value + "%";
+                    labelClass += " log-rate-highlight"; // 橙色
                 } else {
                     p += (item.type === 'dep' ? item.value : -item.value);
                     name = item.type === 'dep' ? "📥 存入" : "📤 提款";
@@ -285,7 +277,7 @@
                     amtClass = item.type === 'dep' ? "amt-pos" : "amt-neg";
                 }
                 html = `<div class="log-item">
-                    <div class="log-info"><span class="log-date">${item.date}</span><br><span class="log-type-label">${name}</span></div>
+                    <div class="log-info"><span class="log-date">${item.date}</span><br><span class="${labelClass}">${name}</span></div>
                     <span class="log-amt ${amtClass}">${sign}${item.type==='rate' ? '' : fmt(item.value)}</span>
                     <div class="action-group">
                         <div onclick="startEdit(${item.id}, '${item.type}', ${item.value}, '${item.date}')">${editSvg}</div>
@@ -314,4 +306,3 @@
 </script>
 </body>
 </html>
-
