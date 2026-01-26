@@ -23,29 +23,37 @@
         
         .predict-box { text-align: right; }
         .predict-box label { color: rgba(255,255,255,0.7); font-size: 9px; display: block; margin-bottom: 2px; }
-        .predict-box input { background: rgba(255,255,255,0.2); border: none; color: white; font-size: 10px; padding: 0 5px; border-radius: 6px; width: 105px; height: 24px; outline: none; }
+        .predict-box input { background: rgba(255,255,255,0.2); border: none; color: white; font-size: 10px; padding: 0 5px !important; border-radius: 6px; width: 105px !important; height: 24px; outline: none; }
 
-        /* 還原全寬度框架 */
+        /* 外框保持全寬 */
         .input-card { 
             background: var(--card-bg); 
-            padding: 10px 10px 10px 6px; 
+            padding: 10px 12px; 
             border-radius: 14px; 
-            margin-bottom: 6px; 
-            width: 100%; /* 還原為 100% 寬度 */
-            border: 1px solid transparent; 
+            margin-bottom: 8px; 
+            border-left: 3px solid transparent;
         }
-        #rateInputCard { border-left: 2.5px solid var(--hk-orange); }
-        #moneyInputCard { border-left: 2.5px solid var(--hk-blue); }
+        #rateInputCard { border-left-color: var(--hk-orange); }
+        #moneyInputCard { border-left-color: var(--hk-blue); }
 
-        .input-card.editing { border-color: var(--hk-orange); background: #fffdf5; }
-        .input-row { display: flex; gap: 10px; margin-bottom: 8px; align-items: flex-end; }
-        .field-main { flex: 2; }
-        .field-date { flex: 1.3; }
-        label { display: block; font-size: 9px; color: #8e8e93; margin-bottom: 3px; font-weight: bold; }
-        input { width: 100%; padding: 0 8px; border: 1px solid #d1d1d6; border-radius: 8px; font-size: 14px; background: #f9f9f9; height: 36px; }
+        /* 核心修改：縮短輸入格闊度 */
+        .input-row { display: flex; gap: 12px; margin-bottom: 10px; align-items: flex-end; flex-wrap: nowrap; }
+        .field-box { flex: 0 0 auto; width: 120px; } /* 固定輸入格闊度 */
+        .field-box.date { width: 130px; }
+        
+        label { display: block; font-size: 10px; color: #8e8e93; margin-bottom: 4px; font-weight: bold; }
+        input { 
+            width: 100%; 
+            padding: 0 8px; 
+            border: 1px solid #d1d1d6; 
+            border-radius: 8px; 
+            font-size: 14px; 
+            background: #f5f5f7; 
+            height: 34px; 
+        }
 
-        .btn-row { display: flex; gap: 6px; }
-        .btn { flex: 1; border: none; border-radius: 8px; font-weight: bold; color: white; font-size: 13px; height: 36px; cursor: pointer; }
+        .btn-row { display: flex; gap: 8px; flex: 1; }
+        .btn { flex: 1; border: none; border-radius: 8px; font-weight: bold; color: white; font-size: 13px; height: 34px; cursor: pointer; }
         .btn-blue { background: var(--hk-blue); }
         .btn-red { background: var(--withdraw); }
         .btn-orange { background: var(--hk-orange); }
@@ -56,25 +64,20 @@
         #logList { overflow-y: auto; flex: 1; padding-bottom: 60px; }
         
         .log-item { display: flex; justify-content: space-between; padding: 12px 15px; border-bottom: 1px solid #f2f2f7; align-items: center; min-height: 52px; }
-        .log-info { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
-        .log-date { font-size: 10px; color: #8e8e93; line-height: 1.2; }
-        .log-type-label { font-size: 12px; font-weight: 500; line-height: 1.4; margin-top: 1px; }
-        
-        /* 利率文字顏色 */
+        .log-info { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+        .log-date { font-size: 10px; color: #8e8e93; }
+        .log-type-label { font-size: 12px; font-weight: 500; margin-top: 1px; }
         .label-rate { color: var(--hk-orange); font-weight: 600; }
 
         .log-amt { 
-            font-family: -apple-system, sans-serif;
             font-variant-numeric: tabular-nums; 
             font-weight: 600; 
-            font-size: 13px; /* 小字體金額 */
+            font-size: 13px; 
             text-align: right; 
             min-width: 90px;
-            margin-left: 10px;
             display: flex;
             align-items: center;
             justify-content: flex-end;
-            line-height: 1;
         }
 
         .action-group { display: flex; align-items: center; gap: 12px; flex: 0 0 70px; justify-content: flex-end; margin-left: 8px; }
@@ -91,8 +94,6 @@
             border-top: 0.5px solid #e5e5ea;
         }
         .btn-small-mng { background: none; border: none; color: #8e8e93; font-size: 10px; padding: 4px 8px; border-radius: 12px; border: 1px solid #e5e5ea; }
-        .btn-small-del { color: #ff3b30; border-color: #ffcccc; }
-
         .hidden { display: none !important; }
     </style>
 </head>
@@ -114,44 +115,36 @@
         </div>
 
         <div class="input-card" id="rateInputCard">
-            <div id="rateNormalUI">
-                <div class="input-row">
-                    <div class="field-main"><label>📈 年利率 %</label><input type="number" id="rateVal" placeholder="0.00" inputmode="decimal"></div>
-                    <div class="field-date"><label>📅 生效日期</label><input type="date" id="rateDate"></div>
-                </div>
-                <button class="btn btn-orange" style="width:100%;" onclick="addRecord('rate')">更新利率</button>
+            <div id="rateNormalUI" class="input-row">
+                <div class="field-box"><label>📈 年利率 %</label><input type="number" id="rateVal" placeholder="0.00" inputmode="decimal"></div>
+                <div class="field-box date"><label>📅 生效日期</label><input type="date" id="rateDate"></div>
+                <div class="btn-row"><button class="btn btn-orange" onclick="addRecord('rate')">更新</button></div>
             </div>
-            <div id="rateEditUI" class="hidden">
-                <div class="input-row">
-                    <div class="field-main"><label>📈 修改利率 %</label><input type="number" id="editRateVal"></div>
-                    <div class="field-date"><label>📅 修改生效日</label><input type="date" id="editRateDate"></div>
-                </div>
+            <div id="rateEditUI" class="input-row hidden">
+                <div class="field-box"><label>📈 修改利率</label><input type="number" id="editRateVal"></div>
+                <div class="field-box date"><label>📅 修改日期</label><input type="date" id="editRateDate"></div>
                 <div class="btn-row">
-                    <button class="btn btn-success" onclick="confirmEdit('rate')">✅ 完成</button>
-                    <button class="btn btn-gray" onclick="cancelEdit()">❌ 取消</button>
+                    <button class="btn btn-success" onclick="confirmEdit('rate')">✅</button>
+                    <button class="btn btn-gray" onclick="cancelEdit()">❌</button>
                 </div>
             </div>
         </div>
 
         <div class="input-card" id="moneyInputCard">
-            <div id="moneyNormalUI">
-                <div class="input-row">
-                    <div class="field-main"><label>💰 存/提金額</label><input type="number" id="transAmt" placeholder="0.00" inputmode="decimal"></div>
-                    <div class="field-date"><label>📅 交易日期</label><input type="date" id="transDate"></div>
-                </div>
+            <div id="moneyNormalUI" class="input-row">
+                <div class="field-box"><label>💰 金額</label><input type="number" id="transAmt" placeholder="0.00" inputmode="decimal"></div>
+                <div class="field-box date"><label>📅 交易日期</label><input type="date" id="transDate"></div>
                 <div class="btn-row">
                     <button class="btn btn-blue" onclick="addRecord('dep')">存入</button>
-                    <button class="btn btn-red" onclick="addRecord('with')">提款</button>
+                    <button class="btn btn-red" onclick="addRecord('with')">提取</button>
                 </div>
             </div>
-            <div id="moneyEditUI" class="hidden">
-                <div class="input-row">
-                    <div class="field-main"><label>💰 修改金額</label><input type="number" id="editTransAmt"></div>
-                    <div class="field-date"><label>📅 修改日期</label><input type="date" id="editTransDate"></div>
-                </div>
+            <div id="moneyEditUI" class="input-row hidden">
+                <div class="field-box"><label>💰 修改金額</label><input type="number" id="editTransAmt"></div>
+                <div class="field-box date"><label>📅 修改日期</label><input type="date" id="editTransDate"></div>
                 <div class="btn-row">
-                    <button class="btn btn-success" onclick="confirmEdit('money')">✅ 完成</button>
-                    <button class="btn btn-gray" onclick="cancelEdit()">❌ 取消</button>
+                    <button class="btn btn-success" onclick="confirmEdit('money')">✅</button>
+                    <button class="btn btn-gray" onclick="cancelEdit()">❌</button>
                 </div>
             </div>
         </div>
@@ -161,7 +154,7 @@
         <div id="logList"></div>
         <div class="bottom-bar">
             <button class="btn-small-mng" onclick="handleReset()">🧹 重設紀錄</button>
-            <button class="btn-small-mng btn-small-del" onclick="handleDelete()">🗑️ 刪除帳戶</button>
+            <button class="btn-small-mng" style="color:#ff3b30; border-color:#ffcccc;" onclick="handleDelete()">🗑️ 刪除帳戶</button>
         </div>
     </div>
 
@@ -173,9 +166,7 @@
     const todayStr = new Date().toLocaleDateString('sv-SE');
     ['transDate', 'rateDate', 'targetDate'].forEach(id => document.getElementById(id).value = todayStr);
 
-    function fmt(num) {
-        return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    }
+    function fmt(num) { return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 
     async function pull() {
         try {
@@ -262,14 +253,9 @@
         const inputDateStr = document.getElementById('targetDate').value;
         const inputDate = new Date(inputDateStr); inputDate.setHours(0,0,0,0);
         const today = new Date(); today.setHours(0,0,0,0);
-        const todayStrLocal = today.toLocaleDateString('sv-SE');
-        
-        let labelText = "📅 結算至";
-        if (inputDateStr === todayStrLocal) labelText = "📅 今日";
-        else if (inputDate > today) labelText = "🔭 預測至";
         
         document.getElementById('mainCard').className = (inputDate > today) ? 'display-card is-predicting' : 'display-card';
-        document.getElementById('predictLabel').innerText = labelText;
+        document.getElementById('predictLabel').innerText = (inputDateStr === today.toLocaleDateString('sv-SE')) ? "📅 今日" : (inputDate > today ? "🔭 預測至" : "📅 結算至");
 
         let p = 0, r = 0, acc = 0, html = "";
         let iter = (sorted.length > 0) ? new Date(sorted[0].date) : new Date();
@@ -283,21 +269,15 @@
             sorted.filter(x => x.date === dStr).forEach(item => {
                 let sign = "", amtClass = "", name = "", labelClass = "";
                 if (item.type === 'rate') { 
-                    r = item.value / 100; 
-                    name = "📈 利率更新: " + item.value + "%";
-                    labelClass = "label-rate";
-                } 
-                else {
+                    r = item.value / 100; name = "📈 利率更新: " + item.value + "%"; labelClass = "label-rate";
+                } else {
                     p += (item.type === 'dep' ? item.value : -item.value);
                     name = item.type === 'dep' ? "📥 存入" : "📤 提款";
                     sign = item.type === 'dep' ? "+" : "-";
                     amtClass = item.type === 'dep' ? "amt-pos" : "amt-neg";
                 }
                 html = `<div class="log-item">
-                    <div class="log-info">
-                        <span class="log-date">${item.date}</span>
-                        <span class="log-type-label ${labelClass}">${name}</span>
-                    </div>
+                    <div class="log-info"><span class="log-date">${item.date}</span><span class="log-type-label ${labelClass}">${name}</span></div>
                     <span class="log-amt ${amtClass}">${sign}${item.type==='rate' ? '' : fmt(item.value)}</span>
                     <div class="action-group">
                         <div onclick="startEdit(${item.id}, '${item.type}', ${item.value}, '${item.date}')">${editSvg}</div>
@@ -308,10 +288,7 @@
             if (iter.getDate() === 1 && acc > 0) {
                 p += acc;
                 html = `<div class="log-item" style="background:#f0faff">
-                    <div class="log-info">
-                        <span class="log-date">${dStr}</span>
-                        <span class="log-type-label" style="font-weight:bold;color:var(--hk-blue);">🔄 利息存入</span>
-                    </div>
+                    <div class="log-info"><span class="log-date">${dStr}</span><span class="log-type-label" style="font-weight:bold;color:var(--hk-blue);">🔄 利息存入</span></div>
                     <span class="log-amt amt-int">+${fmt(acc)}</span>
                     <div class="action-group"></div>
                 </div>` + html;
