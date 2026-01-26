@@ -8,30 +8,24 @@
         :root { --hk-blue: #007aff; --hk-orange: #ff9500; --bg: #f2f2f7; --card-bg: #ffffff; --predict: #5856d6; --withdraw: #ff453a; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 12px; padding-bottom: 60px; }
         .container { max-width: 420px; margin: auto; }
-        
-        /* 帳戶切換 */
         .account-tabs { display: flex; gap: 8px; overflow-x: auto; padding: 5px 0 15px 0; scrollbar-width: none; }
         .account-tabs::-webkit-scrollbar { display: none; }
         .tab { padding: 10px 18px; background: #e5e5ea; border-radius: 12px; font-size: 14px; white-space: nowrap; cursor: pointer; color: #3a3a3c; border: none; transition: 0.2s; }
         .tab.active { background: var(--hk-blue); color: white; font-weight: bold; box-shadow: 0 4px 10px rgba(0,122,255,0.3); }
         .add-tab { background: #fff; color: var(--hk-blue); border: 1px dashed var(--hk-blue); }
-
         .display-card { background: var(--hk-blue); color: white; padding: 25px 20px; border-radius: 20px; text-align: center; margin-bottom: 15px; box-shadow: 0 8px 16px rgba(0,122,255,0.15); }
         .amount { font-size: 34px; font-weight: bold; margin: 8px 0; display: block; }
         .breakdown { font-size: 13px; opacity: 0.9; background: rgba(0,0,0,0.15); padding: 6px 12px; border-radius: 20px; display: inline-block; margin-top: 5px; }
-        
         .input-card { background: var(--card-bg); padding: 18px; border-radius: 18px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
         .editing-mode { border: 2px solid var(--hk-orange) !important; background: #fffdf5; }
         label { display: block; font-size: 11px; color: #8e8e93; margin-bottom: 4px; font-weight: bold; }
         input { width: 100%; padding: 12px; border: 1px solid #d1d1d6; border-radius: 10px; font-size: 16px; box-sizing: border-box; background: #f9f9f9; }
-        
         .btn-row { display: flex; gap: 10px; }
         .btn { flex: 1; padding: 14px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; color: white; font-size: 15px; }
         .btn-blue { background: var(--hk-blue); }
         .btn-red { background: var(--withdraw); }
         .btn-orange { background: var(--hk-orange); }
         .btn-gray { background: #8e8e93; }
-        
         .log-item { display: flex; justify-content: space-between; padding: 14px; border-bottom: 1px solid #f2f2f7; background: white; align-items: center; }
         .log-date { font-size: 11px; color: #8e8e93; }
         .log-info { display: flex; flex-direction: column; flex-grow: 1; }
@@ -55,7 +49,7 @@
     </div>
 
     <div class="input-card" style="border: 2px solid var(--predict);">
-        <label>🔭 預測截止日期 (計算利息至當天凌晨)</label>
+        <label>🔭 預測截止日期 (利息計至該日凌晨)</label>
         <input type="date" id="targetDate" onchange="runCalculation()">
     </div>
 
@@ -105,7 +99,6 @@
     let db = { current: "預設帳戶", accounts: { "預設帳戶": [] } };
     let editingId = null;
 
-    // 初始化日期
     const today = new Date().toISOString().split('T')[0];
     ['transDate', 'rateDate', 'targetDate'].forEach(id => document.getElementById(id).value = today);
 
@@ -135,12 +128,7 @@
         document.getElementById('accountTitle').innerText = db.current;
     }
 
-    function switchAccount(name) {
-        cancelEdit();
-        db.current = name;
-        renderTabs();
-        runCalculation();
-    }
+    function switchAccount(name) { cancelEdit(); db.current = name; renderTabs(); runCalculation(); }
 
     function addAcc() {
         const n = prompt("帳戶名稱：");
@@ -151,15 +139,11 @@
         let val = (type === 'rate') ? document.getElementById('rateVal').value : document.getElementById('transAmt').value;
         let date = (type === 'rate') ? document.getElementById('rateDate').value : document.getElementById('transDate').value;
         if (!val || isNaN(val)) return alert("請輸入數值");
-        
         const record = { id: Date.now(), type, date, value: parseFloat(val) };
         if (type === 'rate' && document.getElementById('applyAll').checked) {
             Object.keys(db.accounts).forEach(acc => db.accounts[acc].push({...record, id: Date.now() + Math.random()}));
-        } else {
-            db.accounts[db.current].push(record);
-        }
-        clearInputs();
-        push();
+        } else { db.accounts[db.current].push(record); }
+        clearInputs(); push();
     }
 
     function startEdit(id) {
@@ -168,7 +152,6 @@
         if (!record) return;
         editingId = id;
         window.scrollTo({ top: 0, behavior: 'smooth' });
-
         if (record.type === 'rate') {
             document.getElementById('rateCard').classList.add('editing-mode');
             document.getElementById('rateVal').value = record.value;
@@ -189,16 +172,10 @@
         const list = db.accounts[db.current];
         const idx = list.findIndex(r => r.id === editingId);
         if (idx === -1) return;
-
-        if (mode === 'money') {
-            list[idx].value = parseFloat(document.getElementById('transAmt').value);
-            list[idx].date = document.getElementById('transDate').value;
-        } else {
-            list[idx].value = parseFloat(document.getElementById('rateVal').value);
-            list[idx].date = document.getElementById('rateDate').value;
-        }
-        cancelEdit();
-        push();
+        const val = parseFloat(mode === 'money' ? document.getElementById('transAmt').value : document.getElementById('rateVal').value);
+        const date = mode === 'money' ? document.getElementById('transDate').value : document.getElementById('rateDate').value;
+        list[idx].value = val; list[idx].date = date;
+        cancelEdit(); push();
     }
 
     function cancelEdit() {
@@ -212,33 +189,28 @@
         clearInputs();
     }
 
-    function clearInputs() {
-        document.getElementById('transAmt').value = '';
-        document.getElementById('rateVal').value = '';
-    }
+    function clearInputs() { document.getElementById('transAmt').value = ''; document.getElementById('rateVal').value = ''; }
 
-    function delRecord(id) {
-        if(confirm("確定刪除？")) {
-            db.accounts[db.current] = db.accounts[db.current].filter(r => r.id !== id);
-            push();
-        }
-    }
+    function delRecord(id) { if(confirm("確定刪除？")) { db.accounts[db.current] = db.accounts[db.current].filter(r => r.id !== id); push(); } }
 
     function runCalculation() {
         const history = db.accounts[db.current] || [];
         const sorted = [...history].sort((a,b) => new Date(a.date) - new Date(b.date));
-        const targetDate = new Date(document.getElementById('targetDate').value);
-        const renderEnd = new Date(document.getElementById('targetDate').value);
-        renderEnd.setHours(23,59,59);
+        const targetInput = document.getElementById('targetDate').value;
+        const interestEndDate = new Date(targetInput); 
+        interestEndDate.setHours(0,0,0,0);
 
         let p = 0, r = 0, acc = 0, html = "";
         if (sorted.length === 0) { updateUI(0,0); document.getElementById('logList').innerHTML = ""; return; }
 
-        let iter = new Date(sorted[0].date);
-        iter.setHours(0,0,0,0);
+        let iter = new Date(sorted[0].date); iter.setHours(0,0,0,0);
+        const renderEnd = new Date(targetInput); renderEnd.setHours(23,59,59);
 
         while (iter <= renderEnd) {
-            sorted.filter(item => new Date(item.date).toDateString() === iter.toDateString()).forEach(item => {
+            sorted.filter(item => {
+                const d = new Date(item.date); d.setHours(0,0,0,0);
+                return d.getTime() === iter.getTime();
+            }).forEach(item => {
                 let row = "", v = item.value.toFixed(2);
                 if (item.type === 'rate') { 
                     r = item.value / 100;
@@ -254,13 +226,14 @@
             if (iter.getDate() === 1 && acc > 0) {
                 p += acc;
                 const dStr = `${iter.getFullYear()}-${String(iter.getMonth()+1).padStart(2,'0')}-01`;
-                html = `<div class="log-item" style="background:#f0faff">
-                    <div class="log-info"><span class="log-date">${dStr}</span><span style="font-weight:bold;color:var(--hk-blue)">🔄 利息滾入本金</span></div>
-                    <span class="log-amt amt-int">+${acc.toFixed(2)}</span><div style="width:68px"></div>
-                </div>` + html;
+                html = `<div class="log-item" style="background:#f0faff"><div class="log-info"><span class="log-date">${dStr}</span><span style="font-weight:bold;color:var(--hk-blue)">🔄 利息滾入本金</span></div><span class="log-amt amt-int">+${acc.toFixed(2)}</span><div style="width:68px"></div></div>` + html;
                 acc = 0;
             }
-            if (iter < targetDate && p > 0 && r > 0) acc += (p * r) / 365;
+
+            // 【精準過夜息】只有在當天結束且「未到」截止日期時才計息
+            if (iter.getTime() < interestEndDate.getTime() && p > 0 && r > 0) {
+                acc += (p * r) / 365;
+            }
             iter.setDate(iter.getDate() + 1);
         }
         updateUI(p, acc);
