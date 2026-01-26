@@ -35,17 +35,19 @@
         #rateInputCard { border-left-color: var(--hk-orange); }
         #moneyInputCard { border-left-color: var(--hk-blue); }
 
-        /* 核心修改：改為垂直排列 */
-        .input-row { display: flex; flex-direction: column; gap: 10px; }
-        .fields-container { display: flex; gap: 10px; width: 100%; }
+        /* 修正：確保 row 寬度正確且不會溢出 */
+        .input-row { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+        .fields-container { display: flex; gap: 8px; width: 100%; }
         
-        .field-num { flex: 0.7; min-width: 0; }
-        .field-date { flex: 1; min-width: 0; }
+        /* 比例調整：金額/利率 佔 40%，日期 佔 60% */
+        .field-num { flex: 4; min-width: 0; }
+        .field-date { flex: 6; min-width: 0; }
         
         label { display: block; font-size: 9px; color: #8e8e93; margin-bottom: 3px; font-weight: bold; }
-        input { width: 100%; padding: 0 8px; border: 1px solid #d1d1d6; border-radius: 8px; font-size: 14px; background: #f9f9f9; height: 36px; }
+        
+        /* 修正：移除寬度設定衝突，確保盒模型正確 */
+        input { width: 100%; padding: 0 8px; border: 1px solid #d1d1d6; border-radius: 8px; font-size: 14px; background: #f9f9f9; height: 36px; display: block; }
 
-        /* 按鈕移至下一行並填滿 */
         .btn-row, .btn-row-single { display: flex; gap: 8px; width: 100%; }
         
         .btn { flex: 1; border: none; border-radius: 8px; font-weight: bold; color: white; font-size: 14px; height: 38px; cursor: pointer; }
@@ -64,10 +66,7 @@
         .log-type-label { font-size: 12px; font-weight: 500; line-height: 1.4; margin-top: 1px; }
         .log-rate-text { color: var(--hk-orange); font-weight: 600; }
 
-        .log-amt { 
-            font-variant-numeric: tabular-nums; font-weight: 600; font-size: 13px; text-align: right; 
-            min-width: 90px; margin-left: 10px; display: flex; align-items: center; justify-content: flex-end;
-        }
+        .log-amt { font-variant-numeric: tabular-nums; font-weight: 600; font-size: 13px; text-align: right; min-width: 90px; margin-left: 10px; display: flex; align-items: center; justify-content: flex-end; }
 
         .action-group { display: flex; align-items: center; gap: 12px; flex: 0 0 70px; justify-content: flex-end; margin-left: 8px; }
         .icon-svg { width: 16px; height: 16px; fill: #b0b0b7; cursor: pointer; }
@@ -156,7 +155,6 @@
     </div>
 
 <script>
-    // JS 部分邏輯保持不變，僅確保 UI 切換正常
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwjWG0VNOh5X-XigkCtX24GiaDxIvm9EgNVY8iQwg36mAr2TUVtArqq9pFSIReP3MQv/exec';
     let db = { current: "預設帳戶", accounts: { "預設帳戶": [] } };
     let pendingEditId = null;
