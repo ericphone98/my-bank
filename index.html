@@ -195,7 +195,7 @@
         let iter = new Date(sorted[0].date); iter.setHours(0,0,0,0);
 
         while (iter <= renderEndDate) {
-            // 1. 處理當天交易
+            // 1. 處理並顯示當天交易
             sorted.forEach(item => {
                 if (new Date(item.date).toDateString() === iter.toDateString()) {
                     let rowHtml = "";
@@ -214,18 +214,22 @@
                 }
             });
 
-            // 2. 複利結算 (明確顯示為當月 1 號)
+            // 2. 複利結算 (修正時區問題，強制顯示本地 1 號)
             if (iter.getDate() === 1 && acc > 0) {
                 p += acc;
-                const displayDateStr = iter.toISOString().split('T')[0];
+                const y = iter.getFullYear();
+                const m = String(iter.getMonth() + 1).padStart(2, '0');
+                const d = String(iter.getDate()).padStart(2, '0');
+                const localDateStr = `${y}-${m}-${d}`;
+
                 logHtml = `<div class="log-item" style="background:#f0faff">
-                    <div><span class="log-date">${displayDateStr}</span><span style="font-size:12px; font-weight:bold; color:#007aff">🔄 利息自動過帳</span></div>
+                    <div><span class="log-date">${localDateStr}</span><span style="font-size:12px; font-weight:bold; color:#007aff">🔄 利息自動過帳</span></div>
                     <span class="log-amt amt-int">+${acc.toFixed(2)}</span><div style="width:40px"></div>
                 </div>` + logHtml;
                 acc = 0;
             }
 
-            // 3. 計息判斷 (過夜息：當天不計，過夜才計)
+            // 3. 計息判斷 (過夜息邏輯)
             if (iter < interestEndDate && p > 0 && r > 0) {
                 acc += (p * r) / 365;
             }
