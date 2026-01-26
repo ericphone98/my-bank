@@ -53,13 +53,16 @@
         .log-item.being-edited { background: #fff9db; }
         .log-info { flex: 1; }
         .log-date { font-size: 10px; color: #8e8e93; }
-        .log-amt { font-family: -apple-system, sans-serif; font-weight: 700; font-size: 15px; margin-right: 12px; letter-spacing: -0.3px; }
+        /* 金額統一字體與寬度控制 */
+        .log-amt { font-family: -apple-system, sans-serif; font-weight: 700; font-size: 15px; letter-spacing: -0.3px; text-align: right; }
         .amt-pos { color: #34c759; }
         .amt-neg { color: var(--withdraw); }
         .amt-int { color: var(--predict); }
         
-        .action-group { display: flex; align-items: center; gap: 8px; }
+        /* 統一按鈕區域寬度，確保金額對齊 */
+        .action-group { display: flex; align-items: center; gap: 8px; min-width: 64px; justify-content: flex-end; margin-left: 10px; }
         .icon-btn { border: none; background: none; padding: 4px; font-size: 16px; cursor: pointer; opacity: 0.6; }
+        .placeholder-btn { width: 24px; height: 24px; } /* 用於利息紀錄佔位 */
         .hidden { display: none !important; }
     </style>
 </head>
@@ -267,8 +270,8 @@
                 const isEditingThis = (item.id === pendingEditId);
                 html = `<div class="log-item ${isEditingThis ? 'being-edited' : ''}">
                     <div class="log-info"><span class="log-date">${item.date}</span><br><span style="font-size:12px; font-weight:500;">${name}</span></div>
+                    <span class="log-amt ${amtClass}">${sign}${item.type==='rate' ? '' : item.value.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}</span>
                     <div class="action-group">
-                        <span class="log-amt ${amtClass}">${sign}${item.type==='rate' ? '' : item.value.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}</span>
                         <button class="icon-btn" onclick="startEdit(${item.id}, '${item.type}', ${item.value}, '${item.date}')">✏️</button>
                         <button class="icon-btn" style="opacity:0.2" onclick="delRecord(${item.id})">🗑️</button>
                     </div>
@@ -276,7 +279,14 @@
             });
             if (iter.getDate() === 1 && acc > 0) {
                 p += acc;
-                html = `<div class="log-item" style="background:#f0faff"><div class="log-info"><span class="log-date">${dStr}</span><br><span style="font-weight:bold;color:var(--hk-blue);font-size:12px">🔄 利息存入</span></div><span class="log-amt amt-int" style="margin-right:60px">+${acc.toFixed(2)}</span></div>` + html;
+                html = `<div class="log-item" style="background:#f0faff">
+                    <div class="log-info"><span class="log-date">${dStr}</span><br><span style="font-weight:bold;color:var(--hk-blue);font-size:12px">🔄 利息存入</span></div>
+                    <span class="log-amt amt-int">+${acc.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}</span>
+                    <div class="action-group">
+                        <div class="placeholder-btn"></div>
+                        <div class="placeholder-btn"></div>
+                    </div>
+                </div>` + html;
                 acc = 0;
             }
             if (iter < targetDate && p > 0 && r > 0) acc += (p * r) / 365;
@@ -288,7 +298,7 @@
 
     function updateUI(p, acc) {
         document.getElementById('totalDisplay').innerText = `HK$ ${(p+acc).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`;
-        document.getElementById('breakdownDisplay').innerText = `本金: ${p.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})} | 利息: ${acc.toFixed(2)}`;
+        document.getElementById('breakdownDisplay').innerText = `本金: ${p.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})} | 利息: ${acc.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`;
     }
     pull();
 </script>
