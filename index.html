@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HKD 智能存摺</title>
+    <title>智能存摺</title>
     <style>
         :root { --hk-blue: #007aff; --hk-orange: #ff9500; --bg: #f2f2f7; --card-bg: #ffffff; --danger: #ff3b30; --predict: #5856d6; --withdraw: #ff453a; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 12px; padding-bottom: 60px; }
@@ -39,7 +39,7 @@
     <div class="display-card" id="mainCard">
         <small>總資產 (本金 + 利息)</small>
         <span class="amount" id="totalDisplay">HK$ 0.00</span>
-        <div class="breakdown" id="breakdownDisplay">本金: 0.00 | 利息: 0.00</div>
+        <div class="breakdown" id="breakdownDisplay">本金: 0.00 | 未結利息: 0.00</div>
     </div>
 
     <div class="input-card" style="border: 2px solid var(--predict);">
@@ -216,7 +216,7 @@
             if (iter.getDate() === 1 && acc > 0) {
                 p += acc;
                 logHtml = `<div class="log-item" style="background:#f0faff">
-                    <div><span class="log-date">${iter.toISOString().split('T')[0]}</span><span style="font-size:12px; font-weight:bold; color:#007aff">🔄 利息結算 (複利)</span></div>
+                    <div><span class="log-date">${iter.toISOString().split('T')[0]}</span><span style="font-size:12px; font-weight:bold; color:#007aff">🔄 利息結算</span></div>
                     <span class="log-amt amt-int">+${acc.toFixed(2)}</span><div style="width:40px"></div>
                 </div>` + logHtml;
                 acc = 0;
@@ -240,4 +240,5 @@
     pullFromCloud();
 </script>
 </body>
+
 </html>
