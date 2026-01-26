@@ -83,7 +83,7 @@
                 </div>
             </div>
             <span class="amount" id="totalDisplay">HK$ 0.00</span>
-            <div class="breakdown" id="breakdownDisplay">本金: 0.00 | 利息: 0.00</div>
+            <div class="breakdown" id="breakdownDisplay">本金: 0.00 | 未結利息: 0.00</div>
         </div>
 
         <div class="input-card" id="rateInputCard">
@@ -291,10 +291,11 @@
             iter.setDate(iter.getDate() + 1);
         }
         document.getElementById('totalDisplay').innerText = `HK$ ${fmt(p+acc)}`;
-        document.getElementById('breakdownDisplay').innerText = `本金: ${fmt(p)} | 利息: ${fmt(acc)}`;
+        document.getElementById('breakdownDisplay').innerText = `本金: ${fmt(p)} | 未結利息: ${fmt(acc)}`;
         document.getElementById('logList').innerHTML = html || '<div style="padding:20px; text-align:center; color:#ccc;">尚無紀錄</div>';
     }
     pull();
 </script>
 </body>
 </html>
+
