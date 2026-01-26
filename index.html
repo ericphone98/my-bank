@@ -15,13 +15,17 @@
         .tab { padding: 4px 10px; background: #e5e5ea; border-radius: 8px; font-size: 11px; white-space: nowrap; border: none; }
         .tab.active { background: var(--hk-blue); color: white; font-weight: bold; }
 
-        .display-card { background: var(--hk-blue); color: white; padding: 12px 15px; border-radius: 18px; margin-bottom: 8px; }
+        .display-card { background: var(--hk-blue); color: white; padding: 12px 15px; border-radius: 18px; margin-bottom: 8px; transition: background 0.3s; }
+        /* 增加預測時的顏色變化 */
+        .display-card.is-predicting { background: var(--predict); }
+        .display-card.is-past { background: #636366; }
+
         .amount { font-size: 32px; font-weight: bold; margin: 0; font-variant-numeric: tabular-nums; }
         .breakdown { font-size: 11px; opacity: 0.85; margin-top: 4px; }
         
-        .predict-box { text-align: right; }
-        .predict-box label { color: rgba(255,255,255,0.7); font-size: 9px; display: block; }
-        .predict-box input { background: rgba(255,255,255,0.2); border: none; color: white; font-size: 10px; padding: 0 5px; border-radius: 6px; width: 100px !important; height: 22px; text-align: center; outline: none; }
+        .predict-box { text-align: right; width: 110px; }
+        .predict-box label { color: rgba(255,255,255,0.7); font-size: 9px; display: block; margin-bottom: 2px; }
+        .predict-box input { background: rgba(255,255,255,0.2); border: none; color: white; font-size: 10px; padding: 0 5px; border-radius: 6px; width: 100% !important; height: 22px; text-align: center; outline: none; }
 
         .input-card { 
             background: var(--card-bg); padding: 12px; border-radius: 12px; margin-bottom: 6px; 
@@ -30,7 +34,6 @@
         #rateInputCard { border-left-color: var(--hk-orange); border-right-color: var(--hk-orange); }
         #moneyInputCard { border-left-color: var(--hk-blue); border-right-color: var(--hk-blue); }
 
-        /* 更新對象選擇欄樣式 */
         .scope-selector {
             display: flex; background: #f2f2f7; border-radius: 8px; padding: 2px; margin-bottom: 10px;
         }
@@ -151,11 +154,12 @@
 <script>
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwjWG0VNOh5X-XigkCtX24GiaDxIvm9EgNVY8iQwg36mAr2TUVtArqq9pFSIReP3MQv/exec';
     let db = { current: "預設帳戶", accounts: { "預設帳戶": [] } };
-    let currentScope = 'all'; // 預設改為 'all'
+    let currentScope = 'all'; 
     let pendingEditId = null;
 
-    const todayStr = new Date().toLocaleDateString('sv-SE');
-    ['transDate', 'rateDate', 'targetDate'].forEach(id => document.getElementById(id).value = todayStr);
+    // 獲取今天日期
+    const getTodayStr = () => new Date().toLocaleDateString('sv-SE');
+    ['transDate', 'rateDate', 'targetDate'].forEach(id => document.getElementById(id).value = getTodayStr());
 
     function fmt(num) { return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 
@@ -256,8 +260,30 @@
         const rates = sorted.filter(x => x.type === 'rate');
         document.getElementById('rateVal').placeholder = rates.length ? `目前: ${rates[rates.length-1].value}%` : "最新: 0.00";
 
-        const inputDate = new Date(document.getElementById('targetDate').value);
+        // --- 修正標籤邏輯 ---
+        const targetDateInput = document.getElementById('targetDate');
+        const inputDateStr = targetDateInput.value;
+        const inputDate = new Date(inputDateStr);
         inputDate.setHours(0,0,0,0);
+        
+        const realToday = new Date();
+        realToday.setHours(0,0,0,0);
+        const realTodayStr = realToday.toLocaleDateString('sv-SE');
+
+        const labelEl = document.getElementById('predictLabel');
+        const cardEl = document.getElementById('mainCard');
+
+        if (inputDateStr === realTodayStr) {
+            labelEl.innerText = "📅 今日";
+            cardEl.className = "display-card";
+        } else if (inputDate > realToday) {
+            labelEl.innerText = "🔭 預測至";
+            cardEl.className = "display-card is-predicting";
+        } else {
+            labelEl.innerText = "📅 結算至";
+            cardEl.className = "display-card is-past";
+        }
+        // ------------------
         
         let p = 0, r = 0, acc = 0, html = "";
         let iter = (sorted.length > 0) ? new Date(sorted[0].date) : new Date();
