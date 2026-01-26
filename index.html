@@ -27,13 +27,13 @@
 
         .input-card { background: var(--card-bg); padding: 10px; border-radius: 14px; margin-bottom: 6px; }
         .input-row { display: flex; gap: 10px; margin-bottom: 8px; align-items: flex-end; }
-        .field-main { flex: 1.8; } 
-        .field-date { flex: 1.2; } /* 加大日期格闊度 */
+        .field-main { flex: 2; } /* 加大存款寬度 */
+        .field-date { flex: 1.3; } /* 加大日期闊度 */
         
         label { display: block; font-size: 9px; color: #8e8e93; margin-bottom: 3px; font-weight: bold; }
         input { width: 100%; padding: 0 8px; border: 1px solid #d1d1d6; border-radius: 8px; font-size: 14px; background: #f9f9f9; height: 36px; line-height: 36px; -webkit-appearance: none; display: block; }
 
-        /* 利率切換開關 */
+        /* 利率切換開關 (互調後：同步在前，個別在後) */
         .toggle-row { display: flex; gap: 5px; margin-bottom: 8px; background: #eee; padding: 3px; border-radius: 8px; }
         .toggle-btn { flex: 1; border: none; background: none; font-size: 10px; padding: 4px; border-radius: 6px; color: #888; }
         .toggle-btn.active { background: white; color: var(--hk-orange); font-weight: bold; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
@@ -47,14 +47,17 @@
         .log-section { flex: 1; background: white; border-radius: 20px 20px 0 0; display: flex; flex-direction: column; overflow: hidden; }
         #logList { overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; padding-bottom: 100px; }
         .log-item { display: flex; justify-content: space-between; padding: 12px 15px; border-bottom: 1px solid #f2f2f7; align-items: center; }
-        .log-item:active { background: #f9f9f9; } /* 點擊反饋 */
         .log-info { flex: 1; }
         .log-date { font-size: 10px; color: #8e8e93; }
-        .log-amt { font-family: 'SF Mono', monospace; font-weight: 600; font-size: 14px; }
+        .log-amt { font-family: 'SF Mono', monospace; font-weight: 600; font-size: 14px; text-align: right; }
         .amt-pos { color: #34c759; }
         .amt-neg { color: var(--withdraw); }
         .amt-int { color: var(--predict); }
-        .action-btns button { border: none; background: none; font-size: 13px; padding: 5px; opacity: 0.2; }
+        
+        /* 編輯按鈕樣式 */
+        .edit-btn { background: #f2f2f7; color: var(--hk-blue); border: none; font-size: 10px; padding: 4px 8px; border-radius: 5px; margin-right: 8px; font-weight: bold; }
+        .action-btns { display: flex; align-items: center; }
+        .del-btn { border: none; background: none; font-size: 13px; opacity: 0.2; }
     </style>
 </head>
 <body>
@@ -67,7 +70,7 @@
             <div class="card-header">
                 <small id="accountTitle" style="font-weight: bold;">帳戶</small>
                 <div class="predict-box">
-                    <label id="predictLabel">📅 日期選擇</label>
+                    <label id="predictLabel">📅 今日</label>
                     <input type="date" id="targetDate" onchange="runCalculation()">
                 </div>
             </div>
@@ -75,9 +78,9 @@
             <div class="breakdown" id="breakdownDisplay">本金: 0.00 | 利息: 0.00</div>
         </div>
 
-        <div class="input-card">
+        <div class="input-card" style="border-top: 2px solid var(--hk-blue);">
             <div class="input-row">
-                <div class="field-main"><label>💰 金額</label><input type="number" id="transAmt" placeholder="0.00" inputmode="decimal"></div>
+                <div class="field-main"><label>💰 存款/提款金額</label><input type="number" id="transAmt" placeholder="0.00" inputmode="decimal"></div>
                 <div class="field-date"><label>📅 交易日期</label><input type="date" id="transDate"></div>
             </div>
             <div class="btn-row">
@@ -88,8 +91,8 @@
 
         <div class="input-card" style="border-left: 4px solid var(--hk-orange);">
             <div class="toggle-row">
-                <button class="toggle-btn active" id="btnInd" onclick="setRateMode('ind')">個別帳戶</button>
-                <button class="toggle-btn" id="btnAll" onclick="setRateMode('all')">所有帳戶同步</button>
+                <button class="toggle-btn active" id="btnAll" onclick="setRateMode('all')">所有帳戶同步</button>
+                <button class="toggle-btn" id="btnInd" onclick="setRateMode('ind')">個別帳戶</button>
             </div>
             <div class="input-row">
                 <div class="field-main"><label>📈 年利率 %</label><input type="number" id="rateVal" placeholder="0.00" inputmode="decimal"></div>
@@ -106,7 +109,7 @@
 <script>
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwjWG0VNOh5X-XigkCtX24GiaDxIvm9EgNVY8iQwg36mAr2TUVtArqq9pFSIReP3MQv/exec';
     let db = { current: "預設帳戶", accounts: { "預設帳戶": [] } };
-    let rateMode = 'ind';
+    let rateMode = 'all'; // 預設改為同步
 
     const todayStr = new Date().toLocaleDateString('sv-SE');
     ['transDate', 'rateDate', 'targetDate'].forEach(id => document.getElementById(id).value = todayStr);
@@ -159,16 +162,21 @@
         push();
     }
 
-    function editRecord(id, type, val, date) {
+    // 直接編輯功能
+    function startEdit(id, type, val, date) {
         if (type === 'rate') {
             document.getElementById('rateVal').value = val;
             document.getElementById('rateDate').value = date;
+            document.getElementById('rateVal').focus();
         } else {
             document.getElementById('transAmt').value = Math.abs(val);
             document.getElementById('transDate').value = date;
+            document.getElementById('transAmt').focus();
         }
-        // 提示用戶修改後刪除舊紀錄
-        alert("資料已填回上方，修改後請手動點擊舊紀錄的垃圾桶刪除。");
+        // 自動移除舊紀錄，實現「覆蓋式編輯」
+        db.accounts[db.current] = db.accounts[db.current].filter(x => x.id !== id);
+        // 不立即 Push，等用戶按下存入/更新按鈕才 Push
+        runCalculation();
     }
 
     function delRecord(id) { if(confirm("刪除此紀錄？")) { db.accounts[db.current] = db.accounts[db.current].filter(x => x.id !== id); push(); } }
@@ -176,13 +184,15 @@
     function runCalculation() {
         const history = db.accounts[db.current] || [];
         const sorted = [...history].sort((a,b) => new Date(a.date) - new Date(b.date));
-        const targetDate = new Date(document.getElementById('targetDate').value);
+        
+        const targetInput = document.getElementById('targetDate').value;
+        const targetDate = new Date(targetInput);
         const today = new Date(); today.setHours(0,0,0,0);
         
-        // 預測模式判斷
+        // 修復：只有日期晚於今天才顯示預測至
         const isPredicting = targetDate > today;
         document.getElementById('mainCard').className = isPredicting ? 'display-card is-predicting' : 'display-card';
-        document.getElementById('predictLabel').innerText = isPredicting ? "🔭 預測至" : "📅 今日日期";
+        document.getElementById('predictLabel').innerText = isPredicting ? "🔭 預測至" : "📅 結算至";
 
         let p = 0, r = 0, acc = 0, html = "";
         if (sorted.length === 0) { updateUI(0,0); document.getElementById('logList').innerHTML = ""; return; }
@@ -203,20 +213,21 @@
                 }
                 
                 html = `<div class="log-item">
-                    <div class="log-info" onclick="editRecord(${item.id}, '${item.type}', ${item.value}, '${item.date}')">
+                    <div class="log-info">
                         <span class="log-date">${item.date}</span><br>
                         <span style="font-size:12px; font-weight:500;">${name}</span>
                     </div>
-                    <div style="display:flex; align-items:center; gap:8px">
+                    <div class="action-btns">
+                        <button class="edit-btn" onclick="startEdit(${item.id}, '${item.type}', ${item.value}, '${item.date}')">編輯</button>
                         <span class="log-amt ${amtClass}">${sign}${item.type==='rate' ? '' : item.value.toLocaleString(undefined,{minimumFractionDigits:2})}</span>
-                        <div class="action-btns"><button onclick="delRecord(${item.id})">🗑️</button></div>
+                        <button class="del-btn" onclick="delRecord(${item.id})">🗑️</button>
                     </div>
                 </div>` + html;
             });
 
             if (iter.getDate() === 1 && acc > 0) {
                 p += acc;
-                html = `<div class="log-item" style="background:#f0faff"><div class="log-info"><span class="log-date">${dStr}</span><br><span style="font-weight:bold;color:var(--hk-blue);font-size:12px">🔄 利息存入</span></div><span class="log-amt amt-int">+${acc.toFixed(2)}</span><div style="width:28px"></div></div>` + html;
+                html = `<div class="log-item" style="background:#f0faff"><div class="log-info"><span class="log-date">${dStr}</span><br><span style="font-weight:bold;color:var(--hk-blue);font-size:12px">🔄 利息存入</span></div><span class="log-amt amt-int" style="margin-right:25px">+${acc.toFixed(2)}</span></div>` + html;
                 acc = 0;
             }
             if (iter < targetDate && p > 0 && r > 0) acc += (p * r) / 365;
