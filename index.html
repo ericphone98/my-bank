@@ -234,7 +234,7 @@
     function updateDisplay(principal, pendingInterest) {
         const total = principal + pendingInterest;
         document.getElementById('totalDisplay').innerText = `HK$ ${total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-        document.getElementById('breakdownDisplay').innerText = `本金: $${principal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} | 利息: $${pendingInterest.toFixed(2)}`;
+        document.getElementById('breakdownDisplay').innerText = `本金: $${principal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} | 未結利息: $${pendingInterest.toFixed(2)}`;
     }
 
     pullFromCloud();
@@ -242,3 +242,4 @@
 </body>
 
 </html>
+
