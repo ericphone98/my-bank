@@ -11,15 +11,14 @@
         body { display: flex; flex-direction: column; padding: env(safe-area-inset-top) 0 0 0; }
 
         .top-panel { flex-shrink: 0; background: var(--bg); padding: 5px 12px 0 12px; z-index: 10; }
-        .account-tabs-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
-        .account-tabs { display: flex; gap: 6px; overflow-x: auto; flex: 1; scrollbar-width: none; }
+        .account-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; }
         .tab { padding: 4px 10px; background: #e5e5ea; border-radius: 8px; font-size: 11px; white-space: nowrap; border: none; }
         .tab.active { background: var(--hk-blue); color: white; font-weight: bold; }
 
-        .display-card { background: var(--hk-blue); color: white; padding: 12px 15px 18px 15px; border-radius: 18px; text-align: left; margin-bottom: 8px; transition: background 0.3s; }
+        .display-card { background: var(--hk-blue); color: white; padding: 12px 15px; border-radius: 18px; margin-bottom: 8px; transition: background 0.3s; }
         .display-card.is-predicting { background: var(--predict); }
         .card-header { display: flex; justify-content: flex-end; }
-        .amount { font-size: 32px; font-weight: bold; margin: 0; display: block; }
+        .amount { font-size: 32px; font-weight: bold; margin: 0; }
         .breakdown { font-size: 11px; opacity: 0.85; margin-top: 4px; }
         
         .predict-box { text-align: right; }
@@ -43,45 +42,36 @@
         .btn-gray { background: #8e8e93; }
 
         .log-section { flex: 1; background: white; border-radius: 20px 20px 0 0; display: flex; flex-direction: column; overflow: hidden; border-top: 1px solid #e5e5ea; position: relative; }
-        #logList { overflow-y: auto; flex: 1; padding-bottom: 80px; } /* 為底部按鈕預留空間 */
+        #logList { overflow-y: auto; flex: 1; padding-bottom: 60px; }
         
         .log-item { display: flex; justify-content: space-between; padding: 12px 15px; border-bottom: 1px solid #f2f2f7; align-items: center; }
         .log-info { flex: 1; min-width: 0; }
         .log-date { font-size: 10px; color: #8e8e93; }
         .log-amt { font-family: -apple-system, sans-serif; font-weight: 700; font-size: 15px; text-align: right; min-width: 90px; }
-        .action-group { display: flex; align-items: center; gap: 4px; flex: 0 0 70px; justify-content: flex-end; margin-left: 10px; }
+        .action-group { display: flex; align-items: center; gap: 10px; flex: 0 0 70px; justify-content: flex-end; margin-left: 10px; }
+
+        /* SVG 圖示顏色 */
+        .icon-svg { width: 18px; height: 18px; fill: #8e8e93; }
+        .icon-edit:active { fill: var(--hk-blue); }
+        .icon-del:active { fill: var(--withdraw); }
+
         .amt-pos { color: #34c759; }
         .amt-neg { color: var(--withdraw); }
         .amt-int { color: var(--predict); }
 
-        /* 底部管理按鈕欄 */
+        /* 縮小後的底部管理按鈕 */
         .bottom-bar { 
-            position: absolute; 
-            bottom: 0; 
-            left: 0; 
-            right: 0; 
-            background: rgba(255,255,255,0.9); 
-            backdrop-filter: blur(10px); 
-            padding: 10px 15px calc(10px + env(safe-area-inset-bottom)); 
-            display: flex; 
-            gap: 10px; 
-            border-top: 1px solid #eee;
+            position: absolute; bottom: 0; left: 0; right: 0; 
+            background: rgba(255,255,255,0.8); backdrop-filter: blur(5px); 
+            padding: 8px 15px calc(5px + env(safe-area-inset-bottom)); 
+            display: flex; justify-content: center; gap: 20px;
         }
-        .btn-manage { 
-            flex: 1; 
-            height: 40px; 
-            border: none; 
-            border-radius: 10px; 
-            font-size: 12px; 
-            font-weight: 600; 
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
+        .btn-small-mng { 
+            background: none; border: none; color: #8e8e93; font-size: 10px; 
+            padding: 5px 10px; border-radius: 15px; border: 1px solid #e5e5ea;
+            display: flex; align-items: center; gap: 4px;
         }
-        .btn-reset { background: #f2f2f7; color: #8e8e93; }
-        .btn-delete { background: #fff1f0; color: var(--withdraw); }
+        .btn-small-del { color: #ff3b30; border-color: #ffcccc; }
 
         .hidden { display: none !important; }
     </style>
@@ -90,14 +80,12 @@
 
     <div class="top-panel">
         <div id="syncStatus" style="font-size:9px; text-align:center; color:#8e8e93; margin-bottom:2px;">同步中...</div>
-        <div class="account-tabs-row">
-            <div class="account-tabs" id="accountTabs"></div>
-        </div>
+        <div class="account-tabs" id="accountTabs"></div>
 
         <div class="display-card" id="mainCard">
             <div class="card-header">
                 <div class="predict-box">
-                    <label id="predictLabel">📅 結算至</label>
+                    <label id="predictLabel">📅 今日</label>
                     <input type="date" id="targetDate" onchange="runCalculation()">
                 </div>
             </div>
@@ -119,7 +107,7 @@
                     <div class="field-date"><label>📅 修改生效日</label><input type="date" id="editRateDate"></div>
                 </div>
                 <div class="btn-row">
-                    <button class="btn btn-success" onclick="confirmEdit('rate')">✅ 完成修改</button>
+                    <button class="btn btn-success" onclick="confirmEdit('rate')">✅ 完成</button>
                     <button class="btn btn-gray" onclick="cancelEdit()">❌ 取消</button>
                 </div>
             </div>
@@ -128,7 +116,7 @@
         <div class="input-card" id="moneyInputCard" style="border-top: 2px solid var(--hk-blue);">
             <div id="moneyNormalUI">
                 <div class="input-row">
-                    <div class="field-main"><label>💰 存款/提款金額</label><input type="number" id="transAmt" placeholder="0.00" inputmode="decimal"></div>
+                    <div class="field-main"><label>💰 存/提金額</label><input type="number" id="transAmt" placeholder="0.00" inputmode="decimal"></div>
                     <div class="field-date"><label>📅 交易日期</label><input type="date" id="transDate"></div>
                 </div>
                 <div class="btn-row">
@@ -142,7 +130,7 @@
                     <div class="field-date"><label>📅 修改日期</label><input type="date" id="editTransDate"></div>
                 </div>
                 <div class="btn-row">
-                    <button class="btn btn-success" onclick="confirmEdit('money')">✅ 完成修改</button>
+                    <button class="btn btn-success" onclick="confirmEdit('money')">✅ 完成</button>
                     <button class="btn btn-gray" onclick="cancelEdit()">❌ 取消</button>
                 </div>
             </div>
@@ -152,8 +140,8 @@
     <div class="log-section">
         <div id="logList"></div>
         <div class="bottom-bar">
-            <button class="btn-manage btn-reset" onclick="handleReset()">🧹 重設紀錄</button>
-            <button class="btn-manage btn-delete" onclick="handleDelete()">🗑️ 刪除帳戶</button>
+            <button class="btn-small-mng" onclick="handleReset()">🧹 重設紀錄</button>
+            <button class="btn-small-mng btn-small-del" onclick="handleDelete()">🗑️ 刪除帳戶</button>
         </div>
     </div>
 
@@ -171,7 +159,7 @@
             const data = await r.json();
             if (data && data.accounts) db = data;
             renderTabs(); runCalculation();
-            document.getElementById('syncStatus').innerText = "● 雲端同步中";
+            document.getElementById('syncStatus').innerText = "● 雲端同步完成";
         } catch (e) { document.getElementById('syncStatus').innerText = "× 同步失敗"; }
     }
 
@@ -193,21 +181,10 @@
         if (n && !db.accounts[n]) { db.accounts[n] = []; db.current = n; push(); }
     }
 
-    // 底部按鈕邏輯
-    function handleReset() {
-        if (confirm(`確定要清空 [${db.current}] 的所有交易與利率紀錄嗎？`)) {
-            db.accounts[db.current] = [];
-            push();
-        }
-    }
-
+    function handleReset() { if (confirm(`確定清空 [${db.current}] 紀錄？`)) { db.accounts[db.current] = []; push(); } }
     function handleDelete() {
         if (Object.keys(db.accounts).length <= 1) return alert("最後一個帳戶不能刪除。");
-        if (confirm(`危險！確定要永久刪除 [${db.current}] 帳戶嗎？`)) {
-            delete db.accounts[db.current];
-            db.current = Object.keys(db.accounts)[0];
-            push();
-        }
+        if (confirm(`確定刪除 [${db.current}] 帳戶？`)) { delete db.accounts[db.current]; db.current = Object.keys(db.accounts)[0]; push(); }
     }
 
     function addRecord(type) {
@@ -241,8 +218,7 @@
         const oldRec = db.accounts[db.current].find(x => x.id === pendingEditId);
         db.accounts[db.current] = db.accounts[db.current].filter(x => x.id !== pendingEditId);
         db.accounts[db.current].push({ id: Date.now(), type: oldRec.type, date: date, value: parseFloat(val) });
-        cancelEdit();
-        push();
+        cancelEdit(); push();
     }
 
     function cancelEdit() {
@@ -259,25 +235,31 @@
     function runCalculation() {
         const history = db.accounts[db.current] || [];
         const sorted = [...history].sort((a,b) => new Date(a.date) - new Date(b.date));
-        const inputDate = new Date(document.getElementById('targetDate').value); inputDate.setHours(0,0,0,0);
+        const inputDateStr = document.getElementById('targetDate').value;
+        const inputDate = new Date(inputDateStr); inputDate.setHours(0,0,0,0);
         const today = new Date(); today.setHours(0,0,0,0);
+        const todayStrLocal = today.toLocaleDateString('sv-SE');
         
-        const isPredicting = inputDate.getTime() > today.getTime();
-        document.getElementById('mainCard').className = isPredicting ? 'display-card is-predicting' : 'display-card';
-        document.getElementById('predictLabel').innerText = isPredicting ? "🔭 預測至" : "📅 結算至";
+        let labelText = "📅 結算至";
+        if (inputDateStr === todayStrLocal) labelText = "📅 今日";
+        else if (inputDate > today) labelText = "🔭 預測至";
+        
+        document.getElementById('mainCard').className = (inputDate > today) ? 'display-card is-predicting' : 'display-card';
+        document.getElementById('predictLabel').innerText = labelText;
 
         let p = 0, r = 0, acc = 0, html = "";
         let iter = (sorted.length > 0) ? new Date(sorted[0].date) : new Date();
         iter.setHours(0,0,0,0);
 
+        const editSvg = `<svg class="icon-svg icon-edit" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>`;
+        const delSvg = `<svg class="icon-svg icon-del" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>`;
+
         while (iter <= inputDate) {
             const dStr = iter.toLocaleDateString('sv-SE');
             sorted.filter(x => x.date === dStr).forEach(item => {
                 let sign = "", amtClass = "", name = "";
-                if (item.type === 'rate') {
-                    r = item.value / 100;
-                    name = "📈 利率: " + item.value + "%";
-                } else {
+                if (item.type === 'rate') { r = item.value / 100; name = "📈 利率: " + item.value + "%"; } 
+                else {
                     p += (item.type === 'dep' ? item.value : -item.value);
                     name = item.type === 'dep' ? "📥 存入" : "📤 提款";
                     sign = item.type === 'dep' ? "+" : "-";
@@ -287,8 +269,8 @@
                     <div class="log-info"><span class="log-date">${item.date}</span><br><span style="font-size:12px; font-weight:500;">${name}</span></div>
                     <span class="log-amt ${amtClass}">${sign}${item.type==='rate' ? '' : item.value.toLocaleString(undefined,{minimumFractionDigits:2})}</span>
                     <div class="action-group">
-                        <button class="icon-btn" onclick="startEdit(${item.id}, '${item.type}', ${item.value}, '${item.date}')">✏️</button>
-                        <button class="icon-btn" style="opacity:0.2" onclick="delRecord(${item.id})">🗑️</button>
+                        <div onclick="startEdit(${item.id}, '${item.type}', ${item.value}, '${item.date}')">${editSvg}</div>
+                        <div onclick="delRecord(${item.id})">${delSvg}</div>
                     </div>
                 </div>` + html;
             });
