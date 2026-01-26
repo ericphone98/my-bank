@@ -10,59 +10,61 @@
         html, body { height: 100dvh; margin: 0; overflow: hidden; background: var(--bg); font-family: -apple-system, sans-serif; }
         body { display: flex; flex-direction: column; padding: env(safe-area-inset-top) 0 0 0; }
 
+        /* 頂部控制區 */
         .top-panel { flex-shrink: 0; background: var(--bg); padding: 5px 12px 0 12px; z-index: 10; }
         .account-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; }
         .tab { padding: 4px 10px; background: #e5e5ea; border-radius: 8px; font-size: 11px; white-space: nowrap; border: none; }
         .tab.active { background: var(--hk-blue); color: white; font-weight: bold; }
 
-        .display-card { background: var(--hk-blue); color: white; padding: 12px 15px; border-radius: 18px; margin-bottom: 8px; transition: background 0.3s; }
+        /* 顯示卡片 */
+        .display-card { background: var(--hk-blue); color: white; padding: 12px 15px; border-radius: 18px; margin-bottom: 8px; }
         .display-card.is-predicting { background: var(--predict); }
-        .card-header { display: flex; justify-content: flex-end; }
         .amount { font-size: 32px; font-weight: bold; margin: 0; font-variant-numeric: tabular-nums; }
-        .breakdown { font-size: 11px; opacity: 0.85; margin-top: 4px; font-variant-numeric: tabular-nums; }
+        .breakdown { font-size: 11px; opacity: 0.85; margin-top: 4px; }
         
         .predict-box { text-align: right; }
-        .predict-box label { color: rgba(255,255,255,0.7); font-size: 9px; display: block; margin-bottom: 2px; }
-        .predict-box input { background: rgba(255,255,255,0.2); border: none; color: white; font-size: 10px; padding: 0 5px; border-radius: 6px; width: 105px !important; height: 24px; outline: none; text-align: center; }
+        .predict-box label { color: rgba(255,255,255,0.7); font-size: 9px; display: block; }
+        .predict-box input { background: rgba(255,255,255,0.2); border: none; color: white; font-size: 10px; padding: 0 5px; border-radius: 6px; width: 100px !important; height: 22px; text-align: center; outline: none; }
 
-        .input-card { 
-            background: var(--card-bg); 
-            padding: 12px; 
-            border-radius: 12px; 
-            margin-bottom: 6px; 
-            border-left: 3px solid transparent;
-            width: 100%;
-        }
+        /* 輸入區卡片 */
+        .input-card { background: var(--card-bg); padding: 12px; border-radius: 12px; margin-bottom: 6px; border-left: 3px solid transparent; }
         #rateInputCard { border-left-color: var(--hk-orange); }
         #moneyInputCard { border-left-color: var(--hk-blue); }
 
-        /* 修正：強制垂直佈局且寬度限制 */
-        .input-row { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+        .input-row { display: flex; flex-direction: column; gap: 10px; }
         .fields-container { display: flex; gap: 8px; width: 100%; align-items: flex-end; }
         
-        /* 數值架縮小，日期佔大份 */
-        .field-num { flex: 3.5; min-width: 0; }
-        .field-date { flex: 6.5; min-width: 0; }
+        /* 比例重新分配：數字格加寬(4.5)，日期格縮小(5.5) */
+        .field-num { flex: 4.5; min-width: 0; }
+        .field-date { flex: 5.5; min-width: 0; }
         
         label { display: block; font-size: 9px; color: #8e8e93; margin-bottom: 3px; font-weight: bold; }
         
-        /* 核心修正：強制輸入框不超出範圍並文字居中 */
+        /* 核心修復：input 的垂直與水平置中 */
         input { 
             width: 100%; 
-            max-width: 100%;
-            padding: 0 4px; 
+            padding: 0; /* 清除所有 Padding 以利置中 */
             border: 1px solid #d1d1d6; 
             border-radius: 8px; 
             font-size: 14px; 
             background: #f9f9f9; 
-            height: 36px; 
-            display: block; 
-            text-align: center; /* 讓輸入文字志鍾 */
+            height: 34px;      /* 固定高度 */
+            line-height: 34px; /* 與高度一致確保垂直置中 */
+            text-align: center; /* 水平置中 */
             -webkit-appearance: none;
+            appearance: none;
+            min-height: 0;     /* 覆蓋 iOS 預設最小高度 */
         }
 
+        /* 專門針對 iOS 日期控制項的內部置中 */
+        input[type="date"] {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 按鈕樣式 */
         .btn-row, .btn-row-single { display: flex; gap: 8px; width: 100%; }
-        
         .btn { flex: 1; border: none; border-radius: 8px; font-weight: bold; color: white; font-size: 14px; height: 38px; cursor: pointer; }
         .btn-blue { background: var(--hk-blue); }
         .btn-red { background: var(--withdraw); }
@@ -70,31 +72,27 @@
         .btn-success { background: var(--success); }
         .btn-gray { background: #8e8e93; }
 
+        /* 紀錄列表 */
         .log-section { flex: 1; background: white; border-radius: 20px 20px 0 0; display: flex; flex-direction: column; overflow: hidden; border-top: 1px solid #e5e5ea; position: relative; }
         #logList { overflow-y: auto; flex: 1; padding-bottom: 60px; }
-        
-        .log-item { display: flex; justify-content: space-between; padding: 12px 15px; border-bottom: 1px solid #f2f2f7; align-items: center; min-height: 52px; }
-        .log-info { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
-        .log-date { font-size: 10px; color: #8e8e93; line-height: 1.2; }
-        .log-type-label { font-size: 12px; font-weight: 500; line-height: 1.4; margin-top: 1px; }
-        .log-rate-text { color: var(--hk-orange); font-weight: 600; }
-
-        .log-amt { font-variant-numeric: tabular-nums; font-weight: 600; font-size: 13px; text-align: right; min-width: 90px; margin-left: 10px; display: flex; align-items: center; justify-content: flex-end; }
-
-        .action-group { display: flex; align-items: center; gap: 12px; flex: 0 0 70px; justify-content: flex-end; margin-left: 8px; }
-        .icon-svg { width: 16px; height: 16px; fill: #b0b0b7; cursor: pointer; }
+        .log-item { display: flex; justify-content: space-between; padding: 12px 15px; border-bottom: 1px solid #f2f2f7; align-items: center; }
+        .log-info { flex: 1; }
+        .log-date { font-size: 10px; color: #8e8e93; }
+        .log-type-label { font-size: 12px; font-weight: 500; }
+        .log-amt { font-variant-numeric: tabular-nums; font-weight: 600; font-size: 13px; text-align: right; min-width: 90px; }
+        .action-group { display: flex; gap: 12px; margin-left: 8px; }
+        .icon-svg { width: 16px; height: 16px; fill: #b0b0b7; }
         .amt-pos { color: #34c759; }
         .amt-neg { color: var(--withdraw); }
-        .amt-int { color: var(--predict); }
 
         .bottom-bar { 
             position: absolute; bottom: 0; left: 0; right: 0; 
             background: rgba(255,255,255,0.85); backdrop-filter: blur(10px); 
             padding: 8px 15px calc(8px + env(safe-area-inset-bottom)); 
-            display: flex; justify-content: center; gap: 25px;
+            display: flex; justify-content: center; gap: 20px;
             border-top: 0.5px solid #e5e5ea;
         }
-        .btn-small-mng { background: none; border: none; color: #8e8e93; font-size: 10px; padding: 4px 8px; border-radius: 12px; border: 1px solid #e5e5ea; }
+        .btn-small-mng { background: none; border: 1px solid #e5e5ea; color: #8e8e93; font-size: 10px; padding: 4px 10px; border-radius: 10px; }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -105,7 +103,7 @@
         <div class="account-tabs" id="accountTabs"></div>
 
         <div class="display-card" id="mainCard">
-            <div class="card-header">
+            <div style="display: flex; justify-content: flex-end;">
                 <div class="predict-box">
                     <label id="predictLabel">📅 今日</label>
                     <input type="date" id="targetDate" onchange="runCalculation()">
@@ -129,8 +127,8 @@
                     <div class="field-date"><label>📅 修改日期</label><input type="date" id="editRateDate"></div>
                 </div>
                 <div class="btn-row">
-                    <button class="btn btn-success" onclick="confirmEdit('rate')">✅ 儲存</button>
-                    <button class="btn btn-gray" onclick="cancelEdit()">❌ 取消</button>
+                    <button class="btn btn-success" onclick="confirmEdit('rate')">儲存</button>
+                    <button class="btn btn-gray" onclick="cancelEdit()">取消</button>
                 </div>
             </div>
         </div>
@@ -152,8 +150,8 @@
                     <div class="field-date"><label>📅 修改日期</label><input type="date" id="editTransDate"></div>
                 </div>
                 <div class="btn-row">
-                    <button class="btn btn-success" onclick="confirmEdit('money')">✅ 儲存</button>
-                    <button class="btn btn-gray" onclick="cancelEdit()">❌ 取消</button>
+                    <button class="btn btn-success" onclick="confirmEdit('money')">儲存</button>
+                    <button class="btn btn-gray" onclick="cancelEdit()">取消</button>
                 </div>
             </div>
         </div>
@@ -163,11 +161,12 @@
         <div id="logList"></div>
         <div class="bottom-bar">
             <button class="btn-small-mng" onclick="handleReset()">🧹 重設紀錄</button>
-            <button class="btn-small-mng" style="color:#ff3b30; border-color:#ffcccc;" onclick="handleDelete()">🗑️ 刪除帳戶</button>
+            <button class="btn-small-mng" style="color:#ff3b30;" onclick="handleDelete()">🗑️ 刪除帳戶</button>
         </div>
     </div>
 
 <script>
+    // JS 邏輯保持不變...
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwjWG0VNOh5X-XigkCtX24GiaDxIvm9EgNVY8iQwg36mAr2TUVtArqq9pFSIReP3MQv/exec';
     let db = { current: "預設帳戶", accounts: { "預設帳戶": [] } };
     let pendingEditId = null;
@@ -276,9 +275,9 @@
         while (iter <= inputDate) {
             const dStr = iter.toLocaleDateString('sv-SE');
             sorted.filter(x => x.date === dStr).forEach(item => {
-                let sign = "", amtClass = "", name = "", labelExtraClass = "";
+                let sign = "", amtClass = "", name = "";
                 if (item.type === 'rate') { 
-                    r = item.value / 100; name = "📈 利率: " + item.value + "%"; labelExtraClass = "log-rate-text";
+                    r = item.value / 100; name = "📈 利率: " + item.value + "%";
                 } else {
                     p += (item.type === 'dep' ? item.value : -item.value);
                     name = item.type === 'dep' ? "📥 存入" : "📤 提款";
@@ -286,7 +285,7 @@
                     amtClass = item.type === 'dep' ? "amt-pos" : "amt-neg";
                 }
                 html = `<div class="log-item">
-                    <div class="log-info"><span class="log-date">${item.date}</span><span class="log-type-label ${labelExtraClass}">${name}</span></div>
+                    <div class="log-info"><span class="log-date">${item.date}</span><br><span class="log-type-label">${name}</span></div>
                     <span class="log-amt ${amtClass}">${sign}${item.type==='rate' ? '' : fmt(item.value)}</span>
                     <div class="action-group">
                         <div onclick="startEdit(${item.id}, '${item.type}', ${item.value}, '${item.date}')">${editSvg}</div>
@@ -297,8 +296,8 @@
             if (iter.getDate() === 1 && acc > 0) {
                 p += acc;
                 html = `<div class="log-item" style="background:#f0faff">
-                    <div class="log-info"><span class="log-date">${dStr}</span><span class="log-type-label" style="font-weight:bold;color:var(--hk-blue);">🔄 利息存入</span></div>
-                    <span class="log-amt amt-int">+${fmt(acc)}</span>
+                    <div class="log-info"><span class="log-date">${dStr}</span><br><span class="log-type-label" style="color:var(--hk-blue);">🔄 利息存入</span></div>
+                    <span class="log-amt amt-pos" style="color:var(--predict);">+${fmt(acc)}</span>
                     <div class="action-group"></div>
                 </div>` + html;
                 acc = 0;
