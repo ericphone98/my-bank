@@ -11,9 +11,12 @@
         body { display: flex; flex-direction: column; padding: env(safe-area-inset-top) 0 0 0; }
 
         .top-panel { flex-shrink: 0; background: var(--bg); padding: 5px 12px 0 12px; z-index: 10; }
-        .account-tabs { display: flex; gap: 6px; overflow-x: auto; padding: 5px 0; scrollbar-width: none; }
+        .account-tabs-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+        .account-tabs { display: flex; gap: 6px; overflow-x: auto; flex: 1; scrollbar-width: none; }
+        .account-tabs::-webkit-scrollbar { display: none; }
         .tab { padding: 4px 10px; background: #e5e5ea; border-radius: 8px; font-size: 11px; white-space: nowrap; border: none; }
         .tab.active { background: var(--hk-blue); color: white; font-weight: bold; }
+        .manage-btn { background: #d1d1d6; border: none; border-radius: 8px; padding: 4px 8px; font-size: 11px; cursor: pointer; }
 
         .display-card { background: var(--hk-blue); color: white; padding: 12px 15px 18px 15px; border-radius: 18px; text-align: left; margin-bottom: 8px; position: relative; }
         .display-card.is-predicting { background: var(--predict); }
@@ -49,20 +52,37 @@
 
         .log-section { flex: 1; background: white; border-radius: 20px 20px 0 0; display: flex; flex-direction: column; overflow: hidden; border-top: 1px solid #e5e5ea; }
         #logList { overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; padding-bottom: 100px; }
+        
+        /* 核心對齊樣式 */
         .log-item { display: flex; justify-content: space-between; padding: 12px 15px; border-bottom: 1px solid #f2f2f7; align-items: center; }
         .log-item.being-edited { background: #fff9db; }
-        .log-info { flex: 1; }
+        .log-info { flex: 1; min-width: 0; overflow: hidden; } /* 左側文字 */
         .log-date { font-size: 10px; color: #8e8e93; }
-        /* 金額統一字體與寬度控制 */
-        .log-amt { font-family: -apple-system, sans-serif; font-weight: 700; font-size: 15px; letter-spacing: -0.3px; text-align: right; }
+        
+        .log-amt { 
+            font-family: -apple-system, sans-serif; 
+            font-weight: 700; 
+            font-size: 15px; 
+            letter-spacing: -0.3px; 
+            text-align: right;
+            flex: 0 0 auto; /* 金額寬度由內容決定，但不縮放 */
+            min-width: 80px; /* 確保短數字也有固定對齊基準 */
+        }
+        
+        .action-group { 
+            display: flex; 
+            align-items: center; 
+            gap: 4px; 
+            flex: 0 0 70px; /* 固定右側按鈕區寬度 */
+            justify-content: flex-end; 
+            margin-left: 10px;
+        }
+
         .amt-pos { color: #34c759; }
         .amt-neg { color: var(--withdraw); }
         .amt-int { color: var(--predict); }
         
-        /* 統一按鈕區域寬度，確保金額對齊 */
-        .action-group { display: flex; align-items: center; gap: 8px; min-width: 64px; justify-content: flex-end; margin-left: 10px; }
         .icon-btn { border: none; background: none; padding: 4px; font-size: 16px; cursor: pointer; opacity: 0.6; }
-        .placeholder-btn { width: 24px; height: 24px; } /* 用於利息紀錄佔位 */
         .hidden { display: none !important; }
     </style>
 </head>
@@ -70,7 +90,10 @@
 
     <div class="top-panel">
         <div id="syncStatus" style="font-size:9px; text-align:center; color:#8e8e93; margin-bottom:2px;">同步中...</div>
-        <div class="account-tabs" id="accountTabs"></div>
+        <div class="account-tabs-row">
+            <div class="account-tabs" id="accountTabs"></div>
+            <button class="manage-btn" onclick="manageAccount()">⚙️ 管理</button>
+        </div>
 
         <div class="display-card" id="mainCard">
             <div class="card-header">
@@ -174,8 +197,18 @@
     }
 
     function addAcc() {
-        const n = prompt("帳戶名稱：");
+        const n = prompt("新帳戶名稱：");
         if (n && !db.accounts[n]) { db.accounts[n] = []; db.current = n; push(); }
+    }
+
+    function manageAccount() {
+        const action = prompt(`[${db.current}] 管理：\n輸入 "reset"：重設紀錄\n輸入 "del"：刪除帳戶`, "");
+        if (action === "reset") {
+            if (confirm("確定清空所有紀錄？")) { db.accounts[db.current] = []; push(); }
+        } else if (action === "del") {
+            if (Object.keys(db.accounts).length <= 1) return alert("不能刪除唯一的帳戶");
+            if (confirm("確定完全刪除此帳戶？")) { delete db.accounts[db.current]; db.current = Object.keys(db.accounts)[0]; push(); }
+        }
     }
 
     function addRecord(type) {
@@ -213,14 +246,8 @@
     }
 
     function confirmEdit(mode) {
-        let val, date;
-        if (mode === 'rate') {
-            val = document.getElementById('editRateVal').value;
-            date = document.getElementById('editRateDate').value;
-        } else {
-            val = document.getElementById('editTransAmt').value;
-            date = document.getElementById('editTransDate').value;
-        }
+        let val = (mode === 'rate') ? document.getElementById('editRateVal').value : document.getElementById('editTransAmt').value;
+        let date = (mode === 'rate') ? document.getElementById('editRateDate').value : document.getElementById('editTransDate').value;
         if (!val) return;
         const oldRec = db.accounts[db.current].find(x => x.id === pendingEditId);
         const newType = (mode === 'rate') ? 'rate' : oldRec.type;
@@ -232,9 +259,8 @@
 
     function cancelEdit() {
         pendingEditId = null;
-        document.getElementById('rateNormalUI').classList.remove('hidden');
+        document.querySelectorAll('.hidden').forEach(el => el.classList.remove('hidden'));
         document.getElementById('rateEditUI').classList.add('hidden');
-        document.getElementById('moneyNormalUI').classList.remove('hidden');
         document.getElementById('moneyEditUI').classList.add('hidden');
         document.querySelectorAll('.input-card').forEach(c => c.classList.remove('editing'));
         runCalculation();
@@ -247,10 +273,6 @@
         const sorted = [...history].sort((a,b) => new Date(a.date) - new Date(b.date));
         const targetDate = new Date(document.getElementById('targetDate').value);
         targetDate.setHours(0,0,0,0);
-        const today = new Date(); today.setHours(0,0,0,0);
-        const isPredicting = targetDate > today;
-        document.getElementById('mainCard').className = isPredicting ? 'display-card is-predicting' : 'display-card';
-        document.getElementById('predictLabel').innerText = isPredicting ? "🔭 預測至" : "📅 結算至";
         let p = 0, r = 0, acc = 0, html = "";
         let iter = (sorted.length > 0) ? new Date(sorted[0].date) : new Date();
         iter.setHours(0,0,0,0);
@@ -267,10 +289,10 @@
                     sign = item.type === 'dep' ? "+" : "-";
                     amtClass = item.type === 'dep' ? "amt-pos" : "amt-neg";
                 }
-                const isEditingThis = (item.id === pendingEditId);
-                html = `<div class="log-item ${isEditingThis ? 'being-edited' : ''}">
+                const isEditing = (item.id === pendingEditId);
+                html = `<div class="log-item ${isEditing ? 'being-edited' : ''}">
                     <div class="log-info"><span class="log-date">${item.date}</span><br><span style="font-size:12px; font-weight:500;">${name}</span></div>
-                    <span class="log-amt ${amtClass}">${sign}${item.type==='rate' ? '' : item.value.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}</span>
+                    <span class="log-amt ${amtClass}">${sign}${item.type==='rate' ? '' : item.value.toLocaleString(undefined,{minimumFractionDigits:2})}</span>
                     <div class="action-group">
                         <button class="icon-btn" onclick="startEdit(${item.id}, '${item.type}', ${item.value}, '${item.date}')">✏️</button>
                         <button class="icon-btn" style="opacity:0.2" onclick="delRecord(${item.id})">🗑️</button>
@@ -281,11 +303,8 @@
                 p += acc;
                 html = `<div class="log-item" style="background:#f0faff">
                     <div class="log-info"><span class="log-date">${dStr}</span><br><span style="font-weight:bold;color:var(--hk-blue);font-size:12px">🔄 利息存入</span></div>
-                    <span class="log-amt amt-int">+${acc.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}</span>
-                    <div class="action-group">
-                        <div class="placeholder-btn"></div>
-                        <div class="placeholder-btn"></div>
-                    </div>
+                    <span class="log-amt amt-int">+${acc.toLocaleString(undefined,{minimumFractionDigits:2})}</span>
+                    <div class="action-group"></div>
                 </div>` + html;
                 acc = 0;
             }
@@ -297,8 +316,8 @@
     }
 
     function updateUI(p, acc) {
-        document.getElementById('totalDisplay').innerText = `HK$ ${(p+acc).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`;
-        document.getElementById('breakdownDisplay').innerText = `本金: ${p.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})} | 利息: ${acc.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`;
+        document.getElementById('totalDisplay').innerText = `HK$ ${(p+acc).toLocaleString(undefined,{minimumFractionDigits:2})}`;
+        document.getElementById('breakdownDisplay').innerText = `本金: ${p.toLocaleString(undefined,{minimumFractionDigits:2})} | 利息: ${acc.toLocaleString(undefined,{minimumFractionDigits:2})}`;
     }
     pull();
 </script>
