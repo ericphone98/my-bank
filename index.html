@@ -5,34 +5,44 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>智能存摺 Pro</title>
     <style>
-        :root { --hk-blue: #007aff; --hk-orange: #ff9500; --bg: #f2f2f7; --card-bg: #ffffff; --predict: #5856d6; --withdraw: #ff453a; }
+        :root { --hk-blue: #007aff; --hk-orange: #ff9500; --bg: #f2f2f7; --card-bg: #ffffff; --predict: #5856d6; --withdraw: #ff453a; --predict-bg: #f5f3ff; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 12px; padding-bottom: 60px; }
         .container { max-width: 420px; margin: auto; }
+        
         .account-tabs { display: flex; gap: 8px; overflow-x: auto; padding: 5px 0 15px 0; scrollbar-width: none; }
         .account-tabs::-webkit-scrollbar { display: none; }
         .tab { padding: 10px 18px; background: #e5e5ea; border-radius: 12px; font-size: 14px; white-space: nowrap; cursor: pointer; color: #3a3a3c; border: none; transition: 0.2s; }
         .tab.active { background: var(--hk-blue); color: white; font-weight: bold; box-shadow: 0 4px 10px rgba(0,122,255,0.3); }
         .add-tab { background: #fff; color: var(--hk-blue); border: 1px dashed var(--hk-blue); }
-        .display-card { background: var(--hk-blue); color: white; padding: 25px 20px; border-radius: 20px; text-align: center; margin-bottom: 15px; box-shadow: 0 8px 16px rgba(0,122,255,0.15); }
+
+        /* 動態顏色卡片 */
+        .display-card { background: var(--hk-blue); color: white; padding: 25px 20px; border-radius: 20px; text-align: center; margin-bottom: 15px; box-shadow: 0 8px 16px rgba(0,122,255,0.15); transition: 0.5s ease; }
+        .display-card.is-predicting { background: var(--predict); box-shadow: 0 8px 16px rgba(88, 86, 214, 0.3); }
+        
         .amount { font-size: 34px; font-weight: bold; margin: 8px 0; display: block; }
         .breakdown { font-size: 13px; opacity: 0.9; background: rgba(0,0,0,0.15); padding: 6px 12px; border-radius: 20px; display: inline-block; margin-top: 5px; }
+        
         .input-card { background: var(--card-bg); padding: 18px; border-radius: 18px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
         .editing-mode { border: 2px solid var(--hk-orange) !important; background: #fffdf5; }
         label { display: block; font-size: 11px; color: #8e8e93; margin-bottom: 4px; font-weight: bold; }
         input { width: 100%; padding: 12px; border: 1px solid #d1d1d6; border-radius: 10px; font-size: 16px; box-sizing: border-box; background: #f9f9f9; }
+        
         .btn-row { display: flex; gap: 10px; }
         .btn { flex: 1; padding: 14px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; color: white; font-size: 15px; }
         .btn-blue { background: var(--hk-blue); }
         .btn-red { background: var(--withdraw); }
         .btn-orange { background: var(--hk-orange); }
         .btn-gray { background: #8e8e93; }
+        
         .log-item { display: flex; justify-content: space-between; padding: 14px; border-bottom: 1px solid #f2f2f7; background: white; align-items: center; }
+        .log-item.predict-row { background: var(--predict-bg); }
         .log-date { font-size: 11px; color: #8e8e93; }
         .log-info { display: flex; flex-direction: column; flex-grow: 1; }
         .log-amt { font-weight: 600; font-size: 15px; margin-right: 10px; }
         .amt-pos { color: #34c759; }
         .amt-neg { color: var(--withdraw); }
         .amt-int { color: var(--predict); }
+        .predict-tag { font-size: 10px; background: var(--predict); color: white; padding: 1px 5px; border-radius: 4px; margin-left: 5px; vertical-align: middle; }
         .action-btns button { border: none; background: none; font-size: 16px; cursor: pointer; padding: 5px; }
         #syncStatus { text-align:center; font-size:11px; color:#8e8e93; margin-bottom:8px; font-weight: bold; }
     </style>
@@ -43,7 +53,7 @@
     <div class="account-tabs" id="accountTabs"></div>
 
     <div class="display-card" id="mainCard">
-        <small id="accountTitle">載入中...</small>
+        <small id="accountTitle">載入中...</small> <span id="modeTag"></span>
         <span class="amount" id="totalDisplay">HK$ 0.00</span>
         <div class="breakdown" id="breakdownDisplay">本金: 0.00 | 利息: 0.00</div>
     </div>
@@ -99,8 +109,9 @@
     let db = { current: "預設帳戶", accounts: { "預設帳戶": [] } };
     let editingId = null;
 
-    const today = new Date().toISOString().split('T')[0];
-    ['transDate', 'rateDate', 'targetDate'].forEach(id => document.getElementById(id).value = today);
+    const todayDate = new Date(); todayDate.setHours(0,0,0,0);
+    const todayStr = todayDate.toISOString().split('T')[0];
+    ['transDate', 'rateDate', 'targetDate'].forEach(id => document.getElementById(id).value = todayStr);
 
     async function pull() {
         try {
@@ -123,12 +134,10 @@
     function renderTabs() {
         const tabs = document.getElementById('accountTabs');
         tabs.innerHTML = Object.keys(db.accounts).map(n => 
-            `<button class="tab ${n===db.current?'active':''}" onclick="switchAccount('${n}')">${n}</button>`
+            `<button class="tab ${n===db.current?'active':''}" onclick="db.current='${n}';renderTabs();runCalculation();">${n}</button>`
         ).join('') + `<button class="tab add-tab" onclick="addAcc()">+ 新增</button>`;
         document.getElementById('accountTitle').innerText = db.current;
     }
-
-    function switchAccount(name) { cancelEdit(); db.current = name; renderTabs(); runCalculation(); }
 
     function addAcc() {
         const n = prompt("帳戶名稱：");
@@ -138,7 +147,7 @@
     function addRecord(type) {
         let val = (type === 'rate') ? document.getElementById('rateVal').value : document.getElementById('transAmt').value;
         let date = (type === 'rate') ? document.getElementById('rateDate').value : document.getElementById('transDate').value;
-        if (!val || isNaN(val)) return alert("請輸入數值");
+        if (!val || isNaN(val)) return alert("請輸入有效數值");
         const record = { id: Date.now(), type, date, value: parseFloat(val) };
         if (type === 'rate' && document.getElementById('applyAll').checked) {
             Object.keys(db.accounts).forEach(acc => db.accounts[acc].push({...record, id: Date.now() + Math.random()}));
@@ -172,9 +181,8 @@
         const list = db.accounts[db.current];
         const idx = list.findIndex(r => r.id === editingId);
         if (idx === -1) return;
-        const val = parseFloat(mode === 'money' ? document.getElementById('transAmt').value : document.getElementById('rateVal').value);
-        const date = mode === 'money' ? document.getElementById('transDate').value : document.getElementById('rateDate').value;
-        list[idx].value = val; list[idx].date = date;
+        list[idx].value = parseFloat(mode === 'money' ? document.getElementById('transAmt').value : document.getElementById('rateVal').value);
+        list[idx].date = mode === 'money' ? document.getElementById('transDate').value : document.getElementById('rateDate').value;
         cancelEdit(); push();
     }
 
@@ -197,8 +205,18 @@
         const history = db.accounts[db.current] || [];
         const sorted = [...history].sort((a,b) => new Date(a.date) - new Date(b.date));
         const targetInput = document.getElementById('targetDate').value;
-        const interestEndDate = new Date(targetInput); 
-        interestEndDate.setHours(0,0,0,0);
+        const interestEndDate = new Date(targetInput); interestEndDate.setHours(0,0,0,0);
+        
+        // 切換主卡片顏色
+        const isPredictingMode = interestEndDate > todayDate;
+        const mainCard = document.getElementById('mainCard');
+        if (isPredictingMode) {
+            mainCard.classList.add('is-predicting');
+            document.getElementById('modeTag').innerHTML = '<span class="predict-tag">🔭 預測中</span>';
+        } else {
+            mainCard.classList.remove('is-predicting');
+            document.getElementById('modeTag').innerText = '';
+        }
 
         let p = 0, r = 0, acc = 0, html = "";
         if (sorted.length === 0) { updateUI(0,0); document.getElementById('logList').innerHTML = ""; return; }
@@ -207,6 +225,8 @@
         const renderEnd = new Date(targetInput); renderEnd.setHours(23,59,59);
 
         while (iter <= renderEnd) {
+            const isFuture = iter > todayDate;
+            
             sorted.filter(item => {
                 const d = new Date(item.date); d.setHours(0,0,0,0);
                 return d.getTime() === iter.getTime();
@@ -214,23 +234,25 @@
                 let row = "", v = item.value.toFixed(2);
                 if (item.type === 'rate') { 
                     r = item.value / 100;
-                    row = `<div class="log-info"><span class="log-date">${item.date}</span><span>📈 利率: ${item.value}%</span></div>`;
+                    row = `<div class="log-info"><span class="log-date">${item.date}${isFuture?' <span class="predict-tag">🔭 預估</span>':''}</span><span>📈 利率: ${item.value}%</span></div>`;
                 } else {
                     p += (item.type === 'dep' ? item.value : -item.value);
-                    row = `<div class="log-info"><span class="log-date">${item.date}</span><span>${item.type==='dep'?'📥 存入':'📤 提款'}</span></div>
+                    row = `<div class="log-info"><span class="log-date">${item.date}${isFuture?' <span class="predict-tag">🔭 預估</span>':''}</span><span>${item.type==='dep'?'📥 存入':'📤 提款'}</span></div>
                            <span class="log-amt ${item.type==='dep'?'amt-pos':'amt-neg'}">${item.type==='dep'?'+':'-'}${v}</span>`;
                 }
-                html = `<div class="log-item">${row}<div class="action-btns"><button onclick="startEdit(${item.id})">✏️</button><button onclick="delRecord(${item.id})">🗑️</button></div></div>` + html;
+                html = `<div class="log-item ${isFuture?'predict-row':''}">${row}<div class="action-btns"><button onclick="startEdit(${item.id})">✏️</button><button onclick="delRecord(${item.id})">🗑️</button></div></div>` + html;
             });
 
             if (iter.getDate() === 1 && acc > 0) {
                 p += acc;
                 const dStr = `${iter.getFullYear()}-${String(iter.getMonth()+1).padStart(2,'0')}-01`;
-                html = `<div class="log-item" style="background:#f0faff"><div class="log-info"><span class="log-date">${dStr}</span><span style="font-weight:bold;color:var(--hk-blue)">🔄 利息滾入本金</span></div><span class="log-amt amt-int">+${acc.toFixed(2)}</span><div style="width:68px"></div></div>` + html;
+                html = `<div class="log-item ${isFuture?'predict-row':''}" style="background:${isFuture?'#f5f3ff':'#f0faff'}">
+                    <div class="log-info"><span class="log-date">${dStr}${isFuture?' <span class="predict-tag">🔭 預估</span>':''}</span><span style="font-weight:bold;color:${isFuture?'var(--predict)':'var(--hk-blue)'}">🔄 利息滾入本金</span></div>
+                    <span class="log-amt amt-int">+${acc.toFixed(2)}</span><div style="width:68px"></div>
+                </div>` + html;
                 acc = 0;
             }
 
-            // 【精準過夜息】只有在當天結束且「未到」截止日期時才計息
             if (iter.getTime() < interestEndDate.getTime() && p > 0 && r > 0) {
                 acc += (p * r) / 365;
             }
