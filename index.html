@@ -144,7 +144,14 @@
     const getTodayStr = () => new Date().toLocaleDateString('sv-SE');
     ['transDate', 'rateDate', 'targetDate'].forEach(id => document.getElementById(id).value = getTodayStr());
 
-    function fmt(num) { return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+    // 精準四捨五入至小數點後 2 位，避免浮點數誤差
+    function round2(num) {
+        return Math.round((num + Number.EPSILON) * 100) / 100;
+    }
+
+    function fmt(num) {
+        return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
 
     function setScope(scope) {
         currentScope = scope;
@@ -281,14 +288,17 @@
                     html = `<div class="log-item"><div class="log-info"><span class="log-date">${item.date}</span><span class="log-type-label log-rate-highlight">📈 利率調整: ${item.value}%</span></div><span class="log-amt"></span><div class="action-group"><div onclick="startEdit(${item.id},'rate',${item.value},'${item.date}')">${editSvg}</div><div onclick="delRecord(${item.id})">${delSvg}</div></div></div>` + html;
                 } else {
                     const sign = item.type==='dep'?'+':'-';
-                    p += (item.type==='dep'?item.value:-item.value);
+                    p = round2(p + (item.type==='dep'?item.value:-item.value));
                     html = `<div class="log-item"><div class="log-info"><span class="log-date">${item.date}</span><span class="log-type-label">${item.type==='dep'?'📥 存入':'📤 提款'}</span></div><span class="log-amt ${item.type==='dep'?'amt-pos':'amt-neg'}">${sign}${fmt(item.value)}</span><div class="action-group"><div onclick="startEdit(${item.id},'trans',${item.value},'${item.date}')">${editSvg}</div><div onclick="delRecord(${item.id})">${delSvg}</div></div></div>` + html;
                 }
             });
             if (iter.getDate() === 1 && acc > 0) {
-                p += acc;
-                // 注意這裡：即便沒有按鈕，我們也給一個空的 action-group 佔位
-                html = `<div class="log-item" style="background:#f0faff"><div class="log-info"><span class="log-date">${dStr}</span><span class="log-type-label" style="color:var(--hk-blue);">🔄 利息存入</span></div><span class="log-amt amt-pos" style="color:var(--predict);">+${fmt(acc)}</span><div class="action-group"></div></div>` + html;
+                const settledInterest = round2(acc);
+                if (settledInterest > 0) {
+                    p = round2(p + settledInterest);
+                    // 注意這裡：即便沒有按鈕，我們也給一個空的 action-group 佔位
+                    html = `<div class="log-item" style="background:#f0faff"><div class="log-info"><span class="log-date">${dStr}</span><span class="log-type-label" style="color:var(--hk-blue);">🔄 利息存入</span></div><span class="log-amt amt-pos" style="color:var(--predict);">+${fmt(settledInterest)}</span><div class="action-group"></div></div>` + html;
+                }
                 acc = 0;
             }
             if (iter < inputDate && p > 0 && r > 0) acc += (p * r) / 365;
